@@ -4,8 +4,7 @@ library(tidyverse)
 library(docstring) # Lets you use ?func for functions in this file
 
 rates <- function(time, y, parms, contact) {
-
-  #' rates function
+  #' Model rates function
   #'
   #' This function calculates the rates of change for the compartments in the model.
   #' @param time The current time
@@ -64,6 +63,13 @@ rates <- function(time, y, parms, contact) {
 }
 
 runModel <- function(startyear=2010, endyear=2030, initialConditions, parameters, contact) {
+  #' Run the model
+  #' @param startyear The start year of the model
+  #' @param endyear The end year of the model
+  #' @param initialConditions The initial conditions of the model (flat vector)
+  #' @param parameters The parameters of the model
+  #' @param contact The contact matrix
+  #' @return A tibble with the model results with `time`, `compartment`, and `population` columns
   timesteps <- seq(startyear, endyear, 1/365)
   mod <- ode(y = unlist(initialConditions),
              times = timesteps,
@@ -78,7 +84,6 @@ runModel <- function(startyear=2010, endyear=2030, initialConditions, parameters
 }
 
 plotModel <- function(mod) {
-
   #' Plot the compartments of the model
   #'
   #' This function plots the compartments of the model
@@ -140,26 +145,10 @@ rescalePop <- function(popListCurrent, popTotal) {
   lapply(popListCurrent, function(x) (x*popTotal)/popTotalCurrent)
 }
 
-makeInitialConditions()
-
-
 # mod |>
 #   filter(time==max(time)) |> pull(population, name = compartment) |>
 #   saveRDS("ic.rds")
 # initialConditions <- as.list(readRDS("ic.RDS"))
-
-ageProps <- with(initialConditions, {
-  c(S1+E1+In1+It1+Tr1+        R1,
-    S2+E2+In2+It2+Tr2+VA2+    R2,
-    S3+E3+In3+It3+Tr3+VA3+VB3+R3
-  )/sum(as.double(initialConditions))
-})
-
-total_contacts <- matrix(c(20, 2, 1,
-                           2, 30, 4,
-                           1, 4, 80), nrow=length(ageProps))*365
-pop <- sum(as.double(initialConditions))*ageProps
-contact <- total_contacts/pop
 
 getPopVec <- function(x) {
   nx <- names(x)
@@ -172,27 +161,27 @@ getPopVec <- function(x) {
     x[comp3])
 }
 
-survey_zim <- socialmixr::get_survey("https://doi.org/10.5281/zenodo.3886638")
-cm <- socialmixr::contact_matrix(survey_zim, countries="Zimbabwe",
-                                 age.limits = c(0,1,2),
-                                 sample.participants = T,
-                                 symmetric = T,
-                                 return.demography = T)
-
-Mp=matrix(0,nrow=3,ncol=3)
-for (i in 1:3) {
-  for (j in 1:3) {
-    Ni <- cm$demography$population[i]
-    Nj <- cm$demography$population[j]
-    Npi <- pop[i]
-    Npj <- pop[j]
-    Np <- sum(pop)
-    Mij <- cm$matrix[i,j]
-    sigmaDenom <- sum(pop*cm$matrix[i,]) # TODO: Fix this denom from Arregui M3
-    Mp[i,j] <- Mij * (Npj/Nj) * Np/sigmaDenom
-  }
-}
-cm
+# survey_zim <- socialmixr::get_survey("https://doi.org/10.5281/zenodo.3886638")
+# cm <- socialmixr::contact_matrix(survey_zim, countries="Zimbabwe",
+#                                  age.limits = c(0,1,2),
+#                                  sample.participants = T,
+#                                  symmetric = T,
+#                                  return.demography = T)
+#
+# Mp=matrix(0,nrow=3,ncol=3)
+# for (i in 1:3) {
+#   for (j in 1:3) {
+#     Ni <- cm$demography$population[i]
+#     Nj <- cm$demography$population[j]
+#     Npi <- pop[i]
+#     Npj <- pop[j]
+#     Np <- sum(pop)
+#     Mij <- cm$matrix[i,j]
+#     sigmaDenom <- sum(pop*cm$matrix[i,]) # TODO: Fix this denom from Arregui M3
+#     Mp[i,j] <- Mij * (Npj/Nj) * Np/sigmaDenom
+#   }
+# }
+# cm
 
 makeContactMatrix <- function(initialConditions, total_contacts=matrix(c(11,  5,   100,
                                                                          5,   18,  400,
