@@ -156,9 +156,9 @@ getPopVec <- function(x) {
   comp1 <- notC & str_ends(nx, "1")
   comp2 <- notC & str_ends(nx, "2")
   comp3 <- notC & str_ends(nx, "3")
-  c(x[comp1],
-    x[comp2],
-    x[comp3])
+  c(sum(x[comp1]),
+    sum(x[comp2]),
+    sum(x[comp3]))
 }
 
 # survey_zim <- socialmixr::get_survey("https://doi.org/10.5281/zenodo.3886638")
@@ -185,12 +185,13 @@ getPopVec <- function(x) {
 
 makeContactMatrix <- function(initialConditions, total_contacts=matrix(c(11,  5,   100,
                                                                          5,   18,  400,
-                                                                         100, 400, 2e4), nrow=length(ageProps))*365) {cm
+                                                                         100, 400, 2e4), nrow=3)*365) {
   pop <- sum(as.double(initialConditions))
-  ageProps <- c(S1+E1+In1+It1+Tr1+        R1,
-                S2+E2+In2+It2+Tr2+VA2+    R2,
-                S3+E3+In3+It3+Tr3+VA3+VB3+R3
-  )/pop
+  ageProps <- with(initialConditions,
+                   c(S1+E1+In1+It1+Tr1+        R1,
+                     S2+E2+In2+It2+Tr2+VA2+    R2,
+                     S3+E3+In3+It3+Tr3+VA3+VB3+R3)/pop
+  )
   contact <- total_contacts/pop
   return(contact)
 }
@@ -228,10 +229,13 @@ makeParameters <- function(mu=0.01,
 }
 
 initialConditions <- makeInitialConditions()
+total_contacts <- matrix(c(20, 2, 1,
+                           2, 30, 4,
+                           1, 4, 80), nrow=3)*365
+
 contact <- makeContactMatrix(initialConditions = initialConditions, total_contacts = total_contacts)
 
-mod <- runModel(initialConditions=initialConditions, parameters=makeParameters(), contact)
+mod <- runModel(initialConditions=initialConditions, parameters=makeParameters(), contact = contact)
 
-checkPopVec(mod)
 # plotModel(mod)
 plotInc(mod |> filter(time>=2024))
