@@ -63,8 +63,6 @@ rates <- function(time, y, parms, contact) {
   })
 }
 
-?rates
-
 runModel <- function(startyear=2010, endyear=2030, initialConditions, parameters, contact) {
   timesteps <- seq(startyear, endyear, 1/365)
   mod <- ode(y = unlist(initialConditions),
