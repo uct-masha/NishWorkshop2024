@@ -209,8 +209,7 @@ makeParameters <- function(mu=0.01,
                            rt=1,
                            rtr=1,
                            a=1,  # a=ageing=1yr
-                           timevax=2025
-) {
+                           timevax=2025) {
   c(mu=mu,
     beta=beta,
     sigma=sigma,
