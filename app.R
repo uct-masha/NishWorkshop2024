@@ -50,7 +50,7 @@ ui <- page_navbar(
             ),
             accordion_panel(
               title = "About",
-              "In case we have more stuff to sa"
+              "In case we have more stuff to say."
             ),
             accordion_panel(
               title = "How to use the App",
