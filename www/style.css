@@ -1,0 +1,66 @@
+/* Floating boxes */
+.interventions {
+  border: 1px dashed gray;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+#intervention_card_header {
+  background-color: #2b6898;
+  color: #ffffff;
+}
+
+#intervention_card_body {
+  padding: 15px;
+}
+
+/*  interventioons button */
+#go_interventions {
+  margin-top: 15px;
+  background-color: #2b6898;
+}
+
+.float-go {
+  bottom: calc(2%);
+  left: calc(2%);
+  max-width: 300px;
+  z-index: 2;
+  position: fixed;
+}
+
+.float-go-interv {
+  bottom: calc(4%);;
+  left: calc(2%);;
+  max-width: 500px;
+  z-index: 2;
+  position: fixed;
+}
+
+.float-bookmark {
+  bottom: calc(2%);;
+  right: calc(2%);;
+  max-width: 25%;
+  position:fixed;
+  background-color: white;
+  border: 4px solid black;
+  padding: 5px;
+  z-index: 99999;
+  text-align: left;
+}
+
+.parameters {
+  padding: 20px;
+}
+
+/* masha logo */
+img {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 15px;
+  margin-bottom: 10px;  /* Vertical Space */
+}
+
+/* accordion header */
+.accordion-button, .accordion-button:not(.collapsed) {
+	background-color: #f8f8f8!important;
+}
