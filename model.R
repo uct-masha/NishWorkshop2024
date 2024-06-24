@@ -131,6 +131,23 @@ plotInc <- function(mod, byAge=TRUE) {
          fill="Age group")
 }
 
+plotTr <- function(mod, byAge=TRUE) {
+  tbIncAges <- mod |>
+    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
+           Year=year(date_decimal(time)),
+           Month=month(date_decimal(time))) |>
+    filter(compartment |> str_starts("CTr")) |>
+    summarise(Incidence=last(population) - first(population),
+              .by=c(Year, age))
+  tbIncAges |>
+    ggplot(aes(x=Year, y=Incidence, fill=factor(age))) +
+    geom_col(position="dodge") +
+    labs(title="Treatment by age group",
+         x="Year",
+         y="Treatment",
+         fill="Age group")
+}
+
 makeInitialConditions <- function(
     S1=100,  E1=1, In1=1, It1=1, Tr1=1,               R1=0,
     S2=110,  E2=1, In2=1, It2=1, Tr2=1, VA2=0,        R2=0,
