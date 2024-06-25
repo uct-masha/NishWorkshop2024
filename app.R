@@ -27,7 +27,7 @@ ui <- page_navbar(
   ),
   nav_spacer(),
   nav_panel(
-    title = NULL,
+    title = "Home",
     navset_card_pill(
       nav_panel(
         title = "Welcome",
