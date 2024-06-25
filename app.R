@@ -49,8 +49,8 @@ ui <- page_navbar(
               "This is an introduction to the model and the app."
             ),
             accordion_panel(
-              title = "About",
-              "In case we have more stuff to say."
+              title = "About the model",
+              "Details about the model"
             ),
             accordion_panel(
               title = "How to use the App",
@@ -67,15 +67,15 @@ ui <- page_navbar(
           heights_equal = "row",
           max_height = 400,
           gap = 100,
-          numericInput(inputId = "initP", label = "Population size", value = 1000, min = 100, max = 100000, step = 100),
-          sliderInput(inputId = "beta", label = "Average contact rate per year", value = 300, min = 40, max = 1000, step = 1),
-          sliderInput(inputId = "nrec", label = "Average natural recovery period (days)", value = 10, min = 1, max = 20, step = 1),
-          sliderInput(inputId = "lifeexp", label = "Average life expectancy (days)", value = 100, min = 80, max = 150, step = 1),
-          sliderInput(inputId = "lossimm", label = "Average loss of immunity period (days)", value = 30, min = 1, max = 365, step = 1),
-          sliderInput(inputId = "beta1", label = "Relative amplitude of seasonal forcing", value = 0.4, min = 0, max = 1, step = 0.01),
-          sliderInput(inputId = "propv", label = "Vaccination Coverage", value = 20, min = 0, max = 100, step = 10, post = "%"),
-          sliderInput(inputId = "seekvac", label = "Time to seek vaccination", value = 7, min = 1, max = 10, step = 1),
-          sliderInput(inputId = "vacstart", label = "Vaccination start time", value = 10, min = 0, max = 20, step = 0.25)
+          sliderInput(inputId = "beta", label = "Probability of transmission", value = 10, min = 0, max = 100, post = "%"),
+          sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 65, min = 0, max = 100, post = "%"),
+          sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 50, min = 0, max = 100, post = "%"),
+          sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
+          numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
+          numericInput(inputId = "rr", label = "Natural recovery rate", value = 1, min = 1, max = 10),
+          sliderInput(inputId = "ve1", label = "Vaccine efficacy", value = 100, min = 0, max = 100, post = "%"),
+          numericInput(inputId = "rt", label = "Treatment seeking rate", value = 1, min = 1, max = 10),
+          numericInput(inputId = "rtr", label = "Treatment recovery rate", value = 1, min = 1, max = 10)
         )
       ),
       nav_panel(
