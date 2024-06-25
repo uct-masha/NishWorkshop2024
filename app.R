@@ -114,9 +114,36 @@ ui <- page_navbar(
       ),
       nav_panel(
         title = "Results",
-        plotOutput(outputId = "model_plot")
+        accordion(
+          accordion_panel(
+            title = "Incidence by age group",
+            height = "100%",
+            plotOutput(outputId = "model_plot_incidence")
+          ),
+          accordion_panel(
+            title = "Treatment by age group",
+            height = "100%",
+            plotOutput(outputId = "model_plot_treatment")
+          )
+        )
       )
     )
+  ),
+  nav_menu(
+    title = "Links",
+    align = "right",
+    nav_item(tags$a(
+      icon("github"),
+      "Code",
+      href = "https://github.com/uct-masha",
+      target = "_blank"
+    )),
+    nav_item(tags$a(
+      icon("globe"),
+      "MASHA",
+      href = "https://science.uct.ac.za/masha",
+      target = "_blank"
+    ))
   )
 )
 
@@ -136,9 +163,14 @@ server <- function(input, output, session) {
     contact = contact
   )
 
-  # plot the model output
-  output$model_plot <- renderPlot({
+  # plot the model output: Incidence
+  output$model_plot_incidence <- renderPlot({
     plotInc(mod |> filter(time>=2024))
+  })
+
+  # plot the model output: Treatment
+  output$model_plot_treatment <- renderPlot({
+    plotTr(mod)
   })
 }
 
