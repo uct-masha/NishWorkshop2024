@@ -115,15 +115,22 @@ ui <- page_navbar(
       nav_panel(
         title = "Results",
         accordion(
+          open = TRUE,
           accordion_panel(
             title = "Incidence by age group",
             height = "100%",
-            plotOutput(outputId = "model_plot_incidence")
+            card(
+              full_screen = TRUE,
+              plotOutput(outputId = "model_plot_incidence")
+            )
           ),
           accordion_panel(
             title = "Treatment by age group",
             height = "100%",
-            plotOutput(outputId = "model_plot_treatment")
+            card(
+              full_screen = TRUE,
+              plotOutput(outputId = "model_plot_treatment")
+            )
           )
         )
       )
