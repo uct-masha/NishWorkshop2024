@@ -28,7 +28,7 @@ ui <- page_navbar(
   nav_spacer(),
   nav_panel(
     title = "Home",
-    navset_card_pill(
+    navset_card_underline(
       nav_panel(
         title = "Welcome",
         layout_columns(
@@ -100,7 +100,6 @@ ui <- page_navbar(
             div(
               id = "intervention_card_body", class = "card-body",
               layout_columns(
-                class = "package_layout",
                 span(
                   "Package Name:",
                   textInput("package_name", label = NULL, placeholder = "Vaccine 1", width = "250px")
