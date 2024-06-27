@@ -30,7 +30,7 @@
 
 .float-go-interv {
   bottom: calc(4%);;
-  left: calc(2%);;
+  right: calc(2%);;
   max-width: 500px;
   z-index: 2;
   position: fixed;
