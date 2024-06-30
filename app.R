@@ -142,7 +142,7 @@ server <- function(input, output, session) {
                    )
   })
 
-  modelOutput <- reactiveVal()
+  modelOutput <- reactiveVal(readRDS("initial_model_output.rds"))
 
   observeEvent(input$runModel, {
     # model output
@@ -151,6 +151,7 @@ server <- function(input, output, session) {
       parameters = params(),
       contact = contact
     )
+    # saveRDS(mo, "initial_model_output.rds")
     modelOutput(mo)
   })
 
