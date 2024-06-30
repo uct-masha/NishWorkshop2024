@@ -67,6 +67,8 @@ ui <- page_navbar(
             column(3, fluidRow(
               column(12,
                      # sliderInput(inputId = "beta", label = "Probability of transmission", value = 10, min = 0, max = 100, post = "%"),
+                     # year to start the vaccination 2024:2030
+                     numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2024, min = 2024, max = 2030),
                      sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 65, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 50, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
@@ -127,6 +129,7 @@ contact <- makeContactMatrix(
 server <- function(input, output, session) {
   params <- reactive({
     makeParameters(
+                   timevax = input$yearStart,
                    # beta = input$beta/100,
                    cov1 = input$cov1/100,
                    cov2 = input$cov2/100,
