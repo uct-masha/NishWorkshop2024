@@ -75,7 +75,8 @@ ui <- page_navbar(
           numericInput(inputId = "rr", label = "Natural recovery rate", value = 1, min = 1, max = 10),
           sliderInput(inputId = "ve1", label = "Vaccine efficacy", value = 100, min = 0, max = 100, post = "%"),
           numericInput(inputId = "rt", label = "Treatment seeking rate", value = 1, min = 1, max = 10),
-          numericInput(inputId = "rtr", label = "Treatment recovery rate", value = 1, min = 1, max = 10)
+          numericInput(inputId = "rtr", label = "Treatment recovery rate", value = 1, min = 1, max = 10),
+          actionButton(inputId = "runModel", label = "Run Model", class = "btn btn-success")
         )
       ),
       nav_panel(
@@ -167,23 +168,38 @@ contact <- makeContactMatrix(
 )
 # define the server function
 server <- function(input, output, session) {
+  params <- reactive({
+    makeParameters(beta = input$beta/100,
+                   cov1 = input$cov1/100,
+                   cov2 = input$cov2/100,
+                   pt = input$pt/100,
+                   rs = input$rs,
+                   rr = input$rr,
+                   ve1 = input$ve1/100,
+                   rt = input$rt,
+                   rtr = input$rtr)
+  })
 
+  modelOutput <- reactiveVal()
 
-  # model output
-  mod <- runModel(
-    initialConditions = initial_conditions,
-    parameters = makeParameters(),
-    contact = contact
-  )
+  observeEvent(input$runModel, {
+    # model output
+    mo <- runModel(
+      initialConditions = initial_conditions,
+      parameters = params(),
+      contact = contact
+    )
+    modelOutput(mo)
+  })
 
   # plot the model output: Incidence
   output$model_plot_incidence <- renderPlot({
-    plotInc(mod |> filter(time>=2024))
+    plotInc(modelOutput() |> filter(time>=2024))
   })
 
   # plot the model output: Treatment
   output$model_plot_treatment <- renderPlot({
-    plotTr(mod)
+    plotTr(modelOutput() |> filter(time>=2024))
   })
 }
 
