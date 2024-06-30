@@ -141,7 +141,7 @@ ui <- page_navbar(
     nav_item(tags$a(
       icon("github"),
       "Code",
-      href = "https://github.com/uct-masha",
+      href = "https://github.com/uct-masha/NishWorkshop2024",
       target = "_blank"
     )),
     nav_item(tags$a(
