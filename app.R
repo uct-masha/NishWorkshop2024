@@ -159,14 +159,15 @@ ui <- page_navbar(
   )
 )
 
+# global parameters
+initial_conditions <- makeInitialConditions()
+contact <- makeContactMatrix(
+  initialConditions = initial_conditions,
+  total_contacts = total_contacts
+)
 # define the server function
 server <- function(input, output, session) {
 
-  initial_conditions <- makeInitialConditions()
-  contact <- makeContactMatrix(
-    initialConditions = initial_conditions,
-    total_contacts = total_contacts
-  )
 
   # model output
   mod <- runModel(
