@@ -146,8 +146,14 @@ ui <- page_navbar(
     )),
     nav_item(tags$a(
       icon("globe"),
-      "MASHA",
+      "MASHA Website",
       href = "https://science.uct.ac.za/masha",
+      target = "_blank"
+    )),
+    nav_item(tags$a(
+      icon("globe"),
+      "NISH Website",
+      href = "https://health.uct.ac.za/nish",
       target = "_blank"
     ))
   )
