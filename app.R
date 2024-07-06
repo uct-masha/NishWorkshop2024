@@ -1,6 +1,17 @@
 # This script creates a shiny app for a vaccine model meant to be presented
 # at the NiSH Training Workshop
 
+#notes
+# removed vaccination from R1
+# introduced waning functionality in Age 3 only - not used
+# adjusted pop mix to SA pop
+# created population protected plot
+# added a fourth age group (2-5 years)
+## need to add costs to UI
+## need to add a cost function to the model
+## need to add table to the model output
+## need to engage with costing and question structure and create rubric.
+
 library(shiny)
 library(bslib)
 library(deSolve)
@@ -11,7 +22,7 @@ library(shinyWidgets)
 # source the model in
 source("model.R")
 
-# define the ui
+# define the ui ####
 ui <- page_navbar(
   title = "Disease Transmission Model",
   bg = "#373A40",
@@ -67,10 +78,10 @@ ui <- page_navbar(
             column(3, fluidRow(
               column(12,
                      # sliderInput(inputId = "beta", label = "Probability of transmission", value = 10, min = 0, max = 100, post = "%"),
-                     # year to start the vaccination 2024:2030
+                     # year to start the vaccination 2024:2040
                      numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2024, min = 2024, max = 2030),
-                     sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 65, min = 0, max = 100, post = "%"),
-                     sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 50, min = 0, max = 100, post = "%"),
+                     sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 0, min = 0, max = 100, post = "%"),
+                     sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
                      # numericInput(inputId = "rr", label = "Natural recovery rate", value = 1, min = 1, max = 10),
@@ -87,7 +98,7 @@ ui <- page_navbar(
               ),
               card(
                 full_screen = TRUE,
-                plotOutput(outputId = "model_plot_treatment")
+                plotOutput(outputId = "model_plot_protected")
               )
             ))
           )
@@ -119,13 +130,13 @@ ui <- page_navbar(
   )
 )
 
-# global parameters
+# global parameters ####
 initial_conditions <- makeInitialConditions()
 contact <- makeContactMatrix(
   initialConditions = initial_conditions,
   total_contacts = total_contacts
 )
-# define the server function
+# define the server function ####
 server <- function(input, output, session) {
   params <- reactive({
     makeParameters(
@@ -157,13 +168,12 @@ server <- function(input, output, session) {
 
   # plot the model output: Incidence
   output$model_plot_incidence <- renderPlot({
-    plotInc(modelOutput() |> filter(time>=2024))
+    plotInc(modelOutput() |> filter(time>=2022))
   })
 
   # plot the model output: Treatment
-  output$model_plot_treatment <- renderPlot({
-    plotTr(modelOutput() |> filter(time>=2024))
-  })
-}
+  output$model_plot_protected <- renderPlot({
+    plotProt(modelOutput() |> filter(time>=2022))
+  })}
 
 shinyApp(ui, server)
