@@ -61,18 +61,24 @@ ui <- page_navbar(
                    " is a research group at the University of Cape Town. MASHA’s research focus is the development and application of mathematical modelling and computer simulation to predict the dynamics and control of infectious diseases to evaluate the impact of policies aimed at reducing morbidity and mortality. Based in the Faculty of Science, MASHA’s research is closely integrated with other disciplines resulting in policy-driven and impactful scientific research."
             )
           ),
-          accordion(
-            accordion_panel(
-              title = "Introduction",
-              "This is an introduction to the model and the app."
-            ),
-            accordion_panel(
-              title = "About the model",
-              "Details about the model"
-            ),
-            accordion_panel(
-              title = "How to use the App",
-              "Instructions on how to use the app."
+          div(
+            tags$h1("Disease Transmission Model"),
+            tags$p("This application has been developed to exemplify how mathematical modelling can be used to provide scientific evidence to support decisions on vaccine introduction. In this application, a transmission model of a disease X has been developed for a population where the disease is currently transmitting.
+            Disease X has been circulating in the population for many years. It has the following properties:"),
+            tags$ul(
+            tags$li("Having the disease confers life-long immunity (similar to measles)"),
+            tags$li("In the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
+            tags$li("A new vaccine has been developed that is available globally."),
+            tags$li("This vaccine can be delivered in 1 or 2 dose format, where the first dose has protection efficacy of 85% and having both doses confers full (100%) protection."),
+            tags$li("The recommended schedule from the Global Health Authority is that the two doses are delivered at 1 year and 2 years of age respectively."),
+            tags$li("The planned introduction of the vaccine is 2025."),
+            tags$li("The vaccine is not yet included in the national immunisation schedule.")
+                     ),
+            tags$p("This app was created for the NiSH Training Workshop, which is a training workshop for health economists and modellers in South Africa. The workshop is organised by the ",
+                   a("National Institute for Health Innovation (NiSH)", href="https://www.nish.ac.za"),
+                   " and the ",
+                   a("Modelling and Simulation Hub, Africa (MASHA)", href="http://www.masha.uct.ac.za"),
+                   "."
             )
           )
         )
