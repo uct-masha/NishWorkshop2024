@@ -166,14 +166,7 @@ ui <- page_navbar(
 
 # global parameters ####
 initial_conditions <- makeInitialConditions()
-total_contacts <- matrix(c(8,  5,  3,  15,
-                           5,  14, 5,  12,
-                           3,  5,  20, 12,
-                           15, 12, 12, 30), nrow=4)*365
-contact <- makeContactMatrix(
-  initialConditions = initial_conditions,
-  total_contacts = total_contacts
-)
+contact <- makeContactMatrix(initialConditions = initial_conditions)
 mo_initial <- runModel(
   initialConditions = initial_conditions,
   parameters = makeParameters(),
