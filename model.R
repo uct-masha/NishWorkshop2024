@@ -192,6 +192,29 @@ plotTr <- function(mod, byAge=TRUE) {
          fill="Age group")
 }
 
+costing <- function(mod, byAge=TRUE) {
+  tbOutAges <- mod |>
+    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
+           Year=year(date_decimal(time)),
+           Month=month(date_decimal(time))) |>
+    filter(compartment |> str_starts("C"), Year >= makeParameters()["timevax"]) |>
+    summarise(Value=last(population) - first(population),
+              .by=c(Year, age, compartment)) |>
+   mutate(variable = case_when(
+     str_starts(compartment, "CInc") ~ "Inc",
+     str_starts(compartment,"CTr") ~ "Tr",
+     str_starts(compartment, "CVax") ~ "Vax"
+    )) |>
+    select(-compartment) |>
+    pivot_wider(names_from=variable, values_from=Value) |>
+    mutate(CostIntro = makeParameters()["cintro"],
+           CostVax = Vax * makeParameters()["cvacc"],
+           CostDel = Vax * makeParameters()["cdel"],
+           CostTr = Tr * makeParameters()["ctrt"],
+           CostTot = CostVax + CostDel + CostTr) |>
+    pivot_longer(cols=c(Inc, Tr, Vax, CostIntro, CostDel, CostVax, CostTr, CostTot), names_to="variable", values_to="Value")
+}
+
 makeInitialConditions <- function(
     S1=96,  E1=1, In1=5, It1=1, Tr1=1,               R1=0,
     S2=98,  E2=1, In2=3, It2=1, Tr2=1, VA2=0,        R2=0,
@@ -320,6 +343,8 @@ popage<-mod |> #create average population by age and year for denominator in plo
   mutate(Year = floor(time)) |>
   summarise(popyr=((last(pop) + first(pop))/2),
             .by=c(Year, age))
+
+costmod <- costing(mod)
 
 # plotModel(mod)
 plotInc(mod |> filter(time>=2024))
