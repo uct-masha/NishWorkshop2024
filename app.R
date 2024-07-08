@@ -59,24 +59,32 @@ ui <- page_navbar(
           col_widths = c(4, 8),
           card(
             img(src = img_src, class = "logo"),
+            tags$p("This app was originally created for the 3rd Annual Vaccinology Course for NITAGs (AVCN) 2024'; a training workshop for National Immunisation Technical Advisory Groups in Africa. The workshop is organised by the ",
+                   a("Vaccines for Africa Initiative Nitag Support Hub ", href="https://health.uct.ac.za/vacfa/nish"),
+                   " with modelling support from the ",
+                   a("Modelling and Simulation Hub, Africa (MASHA)", href="http://www.masha.uct.ac.za"),
+                   "."
+            ),
+            tags$p(),
             tags$p("The ",
                    a("Modelling and Simulation Hub, Africa (MASHA)", href="http://www.masha.uct.ac.za"),
-                   " is a research group at the University of Cape Town. MASHA’s research focus is the development and application of mathematical modelling and computer simulation to predict the dynamics and control of infectious diseases to evaluate the impact of policies aimed at reducing morbidity and mortality. Based in the Faculty of Science, MASHA’s research is closely integrated with other disciplines resulting in policy-driven and impactful scientific research."
-            )
+                   " is a research group at the University of Cape Town. MASHA’s research focus is the development and application of mathematical modelling and computer simulation to predict the dynamics and control of infectious diseases to evaluate the impact of policies aimed at reducing morbidity and mortality. Based in the Faculty of Science, MASHA’s research is closely integrated with other disciplines resulting in policy-driven and impactful scientific research."),
           ),
-          accordion(
-            accordion_panel(
-              title = "Introduction",
-              "This is an introduction to the model and the app."
-            ),
-            accordion_panel(
-              title = "About the model",
-              "Details about the model"
-            ),
-            accordion_panel(
-              title = "How to use the App",
-              "Instructions on how to use the app."
-            )
+          div(
+            tags$h1("About the App"),
+            tags$p("This application has been developed to exemplify how mathematical modelling can be used to provide scientific evidence to support decisions on vaccine introduction. In this application, a transmission model of a disease X has been developed for a population where the disease is currently transmitting.
+            Disease X has been circulating in the population for many years. It has the following properties:"),
+            tags$ul(
+            tags$li("Having the disease confers life-long immunity (similar to measles)"),
+            tags$li("In the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
+            tags$li("A new vaccine has been developed that is available globally."),
+            tags$li("This vaccine can be delivered in 1 or 2 dose format, where the first dose has protection efficacy of 85% and having both doses confers full (100%) protection."),
+            tags$li("The recommended schedule from the Global Health Authority is that the two doses are delivered at 1 year and 2 years of age respectively."),
+            tags$li("The planned introduction of the vaccine is 2025."),
+            tags$li("The vaccine is not yet included in the national immunisation schedule.")
+                     ),
+            tags$p("How to use the App"),
+            tags$p("Use the sliders and input boxes on the left panel to select intended operational coverage of 1 or both doses of vaccine, and the costs of introducing the vaccine. Once you have made your selection, click the run button to run the transmission model to see the impact of vaccination on disease incidence, cases treated and the protection levels in the population. Use the summary table provided to assess the total cases and costs of vaccination for every scenario you create. You can use this output to generate the cases averted by vaccination and make a ratio of cost per case averted.")
           )
         )
       ),
@@ -147,6 +155,12 @@ ui <- page_navbar(
       icon("github"),
       "Code",
       href = "https://github.com/uct-masha/NishWorkshop2024",
+      target = "_blank"
+    )),
+    nav_item(tags$a(
+      icon("chart-line"),
+      "What is modelling?",
+      href = "www.masha.uct.ac.za/resources/what-model",
       target = "_blank"
     )),
     nav_item(tags$a(
