@@ -134,7 +134,11 @@ plotInc <- function(mod, byAge=TRUE) {
               .by=c(Year, age)) |>
     left_join(popage, by=c("Year", "age"))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Incidence by age group",
          x="Year",
@@ -154,7 +158,11 @@ plotProt <- function(mod, byAge=TRUE) {
               .by=c(Year, age)) |>
     left_join(popage, by=c("Year", "age"))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Protected/popyr, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Protected/popyr, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Population protected by age group (%)",
          x="Year",
@@ -172,7 +180,11 @@ plotTr <- function(mod, byAge=TRUE) {
     summarise(Incidence=last(population) - first(population),
               .by=c(Year, age))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Incidence, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Incidence, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Treatment by age group",
          x="Year",
@@ -283,7 +295,11 @@ makeParameters <- function(mu=0.01,
     rtr=rtr,
     a=a,
     a2=a2,
-    timevax=timevax
+    timevax=timevax,
+    cvacc = cvacc,
+    cdel = cdel,
+    ctrt = ctrt,
+    cintro = cintro
   )
 }
 
