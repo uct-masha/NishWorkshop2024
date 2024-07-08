@@ -260,19 +260,22 @@ getPopVec <- function(x) {
 # }
 # cm
 
-makeContactMatrix <- function(initialConditions, total_contacts=matrix(c(8,  5,  3,  15,
-                                                                         5,  14, 5,  12,
-                                                                         3,  5,  20, 12,
-                                                                         15, 12, 12, 30), nrow=4)*365) {
-  pop <- sum(as.double(initialConditions))
-  ageProps <- with(initialConditions,
-                   c(S1+E1+In1+It1+Tr1+        R1,
-                     S2+E2+In2+It2+Tr2+VA2+    R2,
-                     S3+E3+In3+It3+Tr3+VA3+VB3+R3,
-                     S4+E4+In4+It4+Tr4+VA4+VB4+R4)/pop
-  )
-  contact <- total_contacts/pop
-  return(contact)
+makeContactMatrix <- function(initialConditions) {
+  #' Roughly put in an estimate of contacts per day
+  #' Keep in mind the size of the age groups
+  #' In our model: 0-1, 1-2, 2-5, 6+
+  #' @param initialConditions The initial conditions of the model
+  #' @return A contact matrix which preserves reciprocity
+  pops <- purrr::map_dbl(1:4, ~sum(as.numeric(initialConditions[stringr::str_detect(names(initialConditions), as.character(.x))])))
+  contact <- matrix(c(
+    0.48, 0.30, 0.36, 1.6,  # 0-1 year old has how many contacts with other age group?
+    0.30, 0.84, 0.41, 1.2,
+    0.36, 0.41, 1.61, 2.2,
+    0.01, 0.02, 0.3, 1.9
+  ), byrow = T, ncol=4)
+  # Naive way to ensure reciprocity - one should investigate the terms in the sum
+  contact <- (contact*pops + t(contact*pops))/2/pops
+  contact
 }
 
 makeParameters <- function(mu=0.01,
@@ -315,12 +318,7 @@ makeParameters <- function(mu=0.01,
 }
 
 initialConditions <- makeInitialConditions()
-total_contacts <- matrix(c(8,  5,  3,  15,
-                           5,  14, 5,  12,
-                           3,  5,  20, 12,
-                           15, 12, 12, 30), nrow=4)*365
-
-contact <- makeContactMatrix(initialConditions = initialConditions, total_contacts = total_contacts)
+contact <- makeContactMatrix(initialConditions = initialConditions)
 
 mod <- runModel(startyear=2000, endyear=2040, initialConditions=initialConditions, parameters=makeParameters(), contact = contact)
 
