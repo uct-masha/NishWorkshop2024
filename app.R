@@ -86,10 +86,18 @@ ui <- page_navbar(
               column(12,
                      # sliderInput(inputId = "beta", label = "Probability of transmission", value = 10, min = 0, max = 100, post = "%"),
                      # year to start the vaccination 2024:2040
-                     numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2024, min = 2024, max = 2030),
+                     p("Vaccination"),
+                     numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2025, min = 2025, max = 2025),
                      sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 0, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
+                     p("Costs in USD"),
+                     numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.35, max = 1.35),
+                     numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 3, min = 1, max = 1000),
+                     numericInput(inputId = "ctrt", label = "Cost per case treated", value = 1.2, min = 1, max = 1000),
+                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 850,000, min = 1, max = 10000000),
+                     # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
+
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
                      # numericInput(inputId = "rr", label = "Natural recovery rate", value = 1, min = 1, max = 10),
                      # sliderInput(inputId = "ve1", label = "Vaccine efficacy", value = 100, min = 0, max = 100, post = "%"),
@@ -151,7 +159,11 @@ server <- function(input, output, session) {
                    # beta = input$beta/100,
                    cov1 = input$cov1/100,
                    cov2 = input$cov2/100,
-                   pt = input$pt/100
+                   pt = input$pt/100,
+                   cvacc = input$cvacc,
+                   cdel = input$cdel,
+                   ctrt = input$ctrt,
+                   cintro = input$cintro
                    # rs = input$rs,
                    # rr = input$rr,
                    # ve1 = input$ve1/100,
