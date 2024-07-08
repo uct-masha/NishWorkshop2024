@@ -207,11 +207,13 @@ costing <- function(mod, byAge=TRUE) {
     )) |>
     select(-compartment) |>
     pivot_wider(names_from=variable, values_from=Value) |>
-    mutate(CostIntro = makeParameters()["cintro"],
-           CostVax = Vax * makeParameters()["cvacc"],
-           CostDel = Vax * makeParameters()["cdel"],
-           CostTr = Tr * makeParameters()["ctrt"],
-           CostTot = CostVax + CostDel + CostTr) |>
+    mutate(
+      CostIntro = makeParameters()["cintro"],
+      CostVax = Vax * makeParameters()["cvacc"],
+      CostDel = Vax * makeParameters()["cdel"],
+      CostTr = Tr * makeParameters()["ctrt"],
+      CostTot = if_else(is.na(CostVax), 0, CostVax) + if_else(is.na(CostDel), 0, CostDel) + if_else(is.na(CostTr), 0, CostTr)
+    ) |>
     pivot_longer(cols=c(Inc, Tr, Vax, CostIntro, CostDel, CostVax, CostTr, CostTot), names_to="variable", values_to="Value")
 }
 
