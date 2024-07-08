@@ -212,57 +212,27 @@ server <- function(input, output, session) {
     shinyjs::enable("runModel")
   })
 
-  # table
+  # cost table
   output$model_table <- renderReactable({
 
-    tbIncAges <- modelOutput() |>
-      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-             Year=year(date_decimal(time)),
-             Month=month(date_decimal(time))) |>
-      filter(compartment |> str_starts("CInc")) |>
-      summarise(Incidence=(last(population) - first(population)),
-                .by=c(Year, age))
-
-    tbProtAges <- modelOutput() |>
-      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-             Year=year(date_decimal(time)),
-             Month=month(date_decimal(time))) |>
-      filter(compartment %in% c("R1", "R2", "R3", "R4",  "VA2", "VA3", "VB3", "VA4", "VB4"),
-             Year==(time)) |>
-      summarise(Protected=sum(population),
-                .by=c(Year, age))
-
-    tbTrAges <- modelOutput() |>
-      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-             Year=year(date_decimal(time)),
-             Month=month(date_decimal(time))) |>
-      filter(compartment |> str_starts("CTr")) |>
-      summarise(Treatment=last(population) - first(population),
-                .by=c(Year, age))
-
-    discounted_costs <- costmod %>%
-      filter(variable == "CostTot") %>%
+    cost_tbl <- costmod %>%
+      pivot_wider(
+        names_from = "variable",
+        values_from = "Value"
+      ) %>%
       mutate(
         discounting_factor = (1 + 0.03) ^ (2025 - Year),
-        discounted_value = Value * discounting_factor
+        total_costs_discounted = CostTot * discounting_factor
       ) %>%
-      select(Year, age, cost = Value, discounted_cost = discounted_value)
-
-
-    result <- tbIncAges %>%
-      left_join(tbProtAges, by = join_by(Year, age)) %>%
-      left_join(tbTrAges, by = join_by(Year, age)) %>%
-      left_join(discounted_costs, by = join_by(Year, age)) %>%
-      filter(between(Year, 2025, 2040)) %>%
+      select(!discounting_factor) %>%
       summarise(
-        total_incidence = sum(Incidence),
-        total_protected = sum(Protected),
-        total_treated = sum(Treatment),
-        total_costs = sum(discounted_cost),
+        total_incidence = sum(Inc),
+        total_costs = sum(total_costs_discounted),
         .by = age
       )
+
     reactable(
-      result %>% mutate(
+      cost_tbl %>% mutate(
         age = factor(age),
         age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
       ),
@@ -278,20 +248,6 @@ server <- function(input, output, session) {
         ),
         total_incidence = colDef(
           name = "Total Incidence",
-          footer = function(values) {
-            result <- round(sum(values, na.rm = TRUE), digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
-          }
-        ),
-        total_protected = colDef(
-          name = "Total Protected",
-          footer = function(values) {
-            result <- round(sum(values, na.rm = TRUE), digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
-          }
-        ),
-        total_treated = colDef(
-          name = "Total Treated",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE), digits = 0)
             sprintf("%s", format(result, big.mark = ",", nsmall = 0))
