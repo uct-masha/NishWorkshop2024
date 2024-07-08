@@ -47,12 +47,12 @@ rates <- function(time, y, parms, contact) {
     dIn3 <- a*In2 + (1-pt)*rs*E3 - rr*In3 - (mu+a2)*In3
     dIt3 <- a*It2 + pt*rs*E3 - rt*It3 - (mu+a2)*It3
     dTr3 <- a*Tr2 + rt*It3 - rtr*Tr3 - (mu+a2)*Tr3
-    dVA3 <- a*VA2 - (1-ve1)*lambda[3]*VA3 -(mu + a2 + tau1)*VA3
-    dVB3 <- cov2*a*S2 - (mu+a2)*VB3
+    dVA3 <- cov2*a*S2 + (1-cov2)*a*VA2 - (1-ve1)*lambda[3]*VA3 -(mu + a2 + tau1)*VA3
+    dVB3 <- cov2*a*VA2 - (mu+a2)*VB3
     dR3 <- a*R2+ rr*In3 + rtr*Tr3 - (mu+a2)*R3
     dCInc3 <- lambda[3]*S3 + (1-ve1)*lambda[3]*VA3
     dCTr3 <- rt*It3
-    dCVax3 <- cov2*a*S2
+    dCVax3 <- cov2*a*S2 +cov2*a*VA2
 
     # Age group 4
     dS4 <- a2*S3 - (lambda[4])*S4 - mu*S4 + tau1*VA4
