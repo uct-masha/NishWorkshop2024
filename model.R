@@ -134,7 +134,11 @@ plotInc <- function(mod, byAge=TRUE) {
               .by=c(Year, age)) |>
     left_join(popage, by=c("Year", "age"))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Incidence by age group",
          x="Year",
@@ -154,7 +158,11 @@ plotProt <- function(mod, byAge=TRUE) {
               .by=c(Year, age)) |>
     left_join(popage, by=c("Year", "age"))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Protected/popyr, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Protected/popyr, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Population protected by age group (%)",
          x="Year",
@@ -172,7 +180,11 @@ plotTr <- function(mod, byAge=TRUE) {
     summarise(Incidence=last(population) - first(population),
               .by=c(Year, age))
   tbIncAges |>
-    ggplot(aes(x=Year, y=Incidence, fill=factor(age))) +
+    mutate(
+      age = factor(age),
+      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+    ) %>%
+    ggplot(aes(x=Year, y=Incidence, fill=age)) +
     geom_col(position="dodge") +
     labs(title="Treatment by age group",
          x="Year",
@@ -260,25 +272,28 @@ getPopVec <- function(x) {
 # }
 # cm
 
-makeContactMatrix <- function(initialConditions, total_contacts=matrix(c(8,  5,  3,  15,
-                                                                         5,  14, 5,  12,
-                                                                         3,  5,  20, 12,
-                                                                         15, 12, 12, 30), nrow=4)*365) {
-  pop <- sum(as.double(initialConditions))
-  ageProps <- with(initialConditions,
-                   c(S1+E1+In1+It1+Tr1+        R1,
-                     S2+E2+In2+It2+Tr2+VA2+    R2,
-                     S3+E3+In3+It3+Tr3+VA3+VB3+R3,
-                     S4+E4+In4+It4+Tr4+VA4+VB4+R4)/pop
-  )
-  contact <- total_contacts/pop
-  return(contact)
+makeContactMatrix <- function(initialConditions) {
+  #' Roughly put in an estimate of contacts per day
+  #' Keep in mind the size of the age groups
+  #' In our model: 0-1, 1-2, 2-5, 6+
+  #' @param initialConditions The initial conditions of the model
+  #' @return A contact matrix which preserves reciprocity
+  pops <- purrr::map_dbl(1:4, ~sum(as.numeric(initialConditions[stringr::str_detect(names(initialConditions), as.character(.x))])))
+  contact <- matrix(c(
+    0.48, 0.30, 0.36, 1.6,  # 0-1 year old has how many contacts with other age group?
+    0.30, 0.84, 0.41, 1.2,
+    0.36, 0.41, 1.61, 2.2,
+    0.01, 0.02, 0.3, 1.9
+  ), byrow = T, ncol=4)
+  # Naive way to ensure reciprocity - one should investigate the terms in the sum
+  contact <- (contact*pops + t(contact*pops))/2/pops
+  contact
 }
 
 makeParameters <- function(mu=0.01,
                            beta=0.5,
-                           cov1=0.65,
-                           cov2=0.5,
+                           cov1=0,
+                           cov2=0,
                            pt=1,
                            rs=1,
                            rr=1,
@@ -289,6 +304,7 @@ makeParameters <- function(mu=0.01,
                            a=1,  # a=ageing=1yr
                            a2 = 1/3, #a2 = ageing over 3 years
                            timevax=2025,
+                           discount = 0.03,
                            cvacc = 1.5,
                            cdel = 1,
                            ctrt = 0.5,
@@ -307,6 +323,7 @@ makeParameters <- function(mu=0.01,
     a=a,
     a2=a2,
     timevax=timevax,
+    discount = 0.03,
     cvacc = cvacc,
     cdel = cdel,
     ctrt = ctrt,
@@ -315,12 +332,7 @@ makeParameters <- function(mu=0.01,
 }
 
 initialConditions <- makeInitialConditions()
-total_contacts <- matrix(c(8,  5,  3,  15,
-                           5,  14, 5,  12,
-                           3,  5,  20, 12,
-                           15, 12, 12, 30), nrow=4)*365
-
-contact <- makeContactMatrix(initialConditions = initialConditions, total_contacts = total_contacts)
+contact <- makeContactMatrix(initialConditions = initialConditions)
 
 mod <- runModel(startyear=2000, endyear=2040, initialConditions=initialConditions, parameters=makeParameters(), contact = contact)
 

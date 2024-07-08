@@ -23,6 +23,8 @@ library(tibble)
 library(lubridate)
 library(ggplot2)
 library(docstring) # Lets you use ?func for functions in this file
+library(reactable)
+library(shinycssloaders)
 
 # source the model in
 source("model.R")
@@ -44,7 +46,8 @@ ui <- page_navbar(
   header = tagList(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-    )
+    ),
+    shinyjs::useShinyjs(), # Required to enable shinyjs functionality
   ),
   nav_spacer(),
   nav_panel(
@@ -98,10 +101,10 @@ ui <- page_navbar(
                      sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
                      p("Costs in USD"),
-                     numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.35, max = 1.35),
-                     numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 3, min = 1, max = 1000),
-                     numericInput(inputId = "ctrt", label = "Cost per case treated", value = 1.2, min = 1, max = 1000),
-                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 850,000, min = 1, max = 10000000),
+                     numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.5, max = 1.35),
+                     numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 1, min = 1, max = 1000),
+                     numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.5, min = 1, max = 1000),
+                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 1000, min = 1, max = 10000000),
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
 
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
@@ -115,11 +118,27 @@ ui <- page_navbar(
             column(12-3, fluidRow(
               card(
                 full_screen = TRUE,
-                plotOutput(outputId = "model_plot_incidence")
+                card_header("Outputs are shown as the total for the full model timeframe (2025 - 2040)"),
+                reactableOutput(outputId = "model_table") %>%
+                  withSpinner()
               ),
-              card(
+              navset_card_tab(
                 full_screen = TRUE,
-                plotOutput(outputId = "model_plot_protected")
+                nav_panel(
+                  title = "Incidence",
+                  plotOutput(outputId = "model_plot_incidence") %>%
+                    withSpinner()
+                ),
+                nav_panel(
+                  title = "Protected",
+                  plotOutput(outputId = "model_plot_protected") %>%
+                    withSpinner()
+                ),
+                nav_panel(
+                  title = "Treated",
+                  plotOutput("model_plot_treated") %>%
+                    withSpinner()
+                )
               )
             ))
           )
@@ -153,14 +172,7 @@ ui <- page_navbar(
 
 # global parameters ####
 initial_conditions <- makeInitialConditions()
-total_contacts <- matrix(c(8,  5,  3,  15,
-                           5,  14, 5,  12,
-                           3,  5,  20, 12,
-                           15, 12, 12, 30), nrow=4)*365
-contact <- makeContactMatrix(
-  initialConditions = initial_conditions,
-  total_contacts = total_contacts
-)
+contact <- makeContactMatrix(initialConditions = initial_conditions)
 mo_initial <- runModel(
   initialConditions = initial_conditions,
   parameters = makeParameters(),
@@ -191,6 +203,10 @@ server <- function(input, output, session) {
   modelOutput <- reactiveVal(mo_initial)
 
   observeEvent(input$runModel, {
+    showNotification(span(h4(icon("hourglass-half"), "Model Running..."), "typically runs in 2 to 10 secs."),
+      duration = NULL, type = "message", id = "model_run"
+    )
+    shinyjs::disable("runModel")
     # model output
     mo <- runModel(
       initialConditions = initial_conditions,
@@ -198,6 +214,104 @@ server <- function(input, output, session) {
       contact = contact
     )
     modelOutput(mo)
+    removeNotification(id = "model_run", session = session)
+    shinyjs::enable("runModel")
+  })
+
+  # table
+  output$model_table <- renderReactable({
+
+    tbIncAges <- modelOutput() |>
+      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
+             Year=year(date_decimal(time)),
+             Month=month(date_decimal(time))) |>
+      filter(compartment |> str_starts("CInc")) |>
+      summarise(Incidence=(last(population) - first(population)),
+                .by=c(Year, age))
+
+    tbProtAges <- modelOutput() |>
+      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
+             Year=year(date_decimal(time)),
+             Month=month(date_decimal(time))) |>
+      filter(compartment %in% c("R1", "R2", "R3", "R4",  "VA2", "VA3", "VB3", "VA4", "VB4"),
+             Year==(time)) |>
+      summarise(Protected=sum(population),
+                .by=c(Year, age))
+
+    tbTrAges <- modelOutput() |>
+      mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
+             Year=year(date_decimal(time)),
+             Month=month(date_decimal(time))) |>
+      filter(compartment |> str_starts("CTr")) |>
+      summarise(Treatment=last(population) - first(population),
+                .by=c(Year, age))
+
+    discounted_costs <- costmod %>%
+      filter(variable == "CostTot") %>%
+      mutate(
+        discounting_factor = (1 + 0.03) ^ (2025 - Year),
+        discounted_value = Value * discounting_factor
+      ) %>%
+      select(Year, age, cost = Value, discounted_cost = discounted_value)
+
+
+    result <- tbIncAges %>%
+      left_join(tbProtAges, by = join_by(Year, age)) %>%
+      left_join(tbTrAges, by = join_by(Year, age)) %>%
+      left_join(discounted_costs, by = join_by(Year, age)) %>%
+      filter(between(Year, 2025, 2040)) %>%
+      summarise(
+        total_incidence = sum(Incidence),
+        total_protected = sum(Protected),
+        total_treated = sum(Treatment),
+        total_costs = sum(discounted_cost),
+        .by = age
+      )
+    reactable(
+      result %>% mutate(
+        age = factor(age),
+        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+      ),
+      defaultColDef = colDef(
+        format = colFormat(digits = 0, separators = TRUE),
+        footerStyle = list(fontWeight = "bold")
+      ),
+      columns = list(
+        age = colDef(
+          minWidth = 200,
+          name = "Age Group",
+          footer = "Total (costs include Introduction cost)"
+        ),
+        total_incidence = colDef(
+          name = "Total Incidence",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
+        ),
+        total_protected = colDef(
+          name = "Total Protected",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
+        ),
+        total_treated = colDef(
+          name = "Total Treated",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
+        ),
+        total_costs = colDef(
+          name = "Total Costs",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE) + input$cintro, digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
+        )
+      )
+    )
   })
 
   # plot the model output: Incidence
@@ -205,9 +319,17 @@ server <- function(input, output, session) {
     plotInc(modelOutput() |> filter(time>=2022))
   })
 
-  # plot the model output: Treatment
+  # plot the model output: Protected
   output$model_plot_protected <- renderPlot({
     plotProt(modelOutput() |> filter(time>=2022))
-  })}
+  })
+
+  # plot the model output: Treatment
+  output$model_plot_treated <- renderPlot({
+    plotTr(modelOutput() |> filter(time>=2022))
+  })
+}
+
+  # plot the model output: Treatment
 
 shinyApp(ui, server)
