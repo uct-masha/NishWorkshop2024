@@ -254,8 +254,8 @@ makeContactMatrix <- function(initialConditions, total_contacts=matrix(c(8,  5, 
 
 makeParameters <- function(mu=0.01,
                            beta=0.5,
-                           cov1=0.65,
-                           cov2=0.5,
+                           cov1=0,
+                           cov2=0,
                            pt=1,
                            rs=1,
                            rr=1,
@@ -265,7 +265,11 @@ makeParameters <- function(mu=0.01,
                            rtr=1,
                            a=1,  # a=ageing=1yr
                            a2 = 1/3, #a2 = ageing over 3 years
-                           timevax=2025) {
+                           timevax=2025,
+                           cvacc = 1.35,
+                           cdel = 3,
+                           ctrt = 1.2,
+                           cintro = 850000) {
   c(mu=mu,
     beta=beta,
     cov1=cov1,
