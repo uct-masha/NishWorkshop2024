@@ -44,7 +44,8 @@ ui <- page_navbar(
   header = tagList(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
-    )
+    ),
+    shinyjs::useShinyjs(), # Required to enable shinyjs functionality
   ),
   nav_spacer(),
   nav_panel(
@@ -185,6 +186,10 @@ server <- function(input, output, session) {
   modelOutput <- reactiveVal(mo_initial)
 
   observeEvent(input$runModel, {
+    showNotification(span(h4(icon("hourglass-half"), "Model Running..."), "typically runs in 2 to 10 secs."),
+      duration = NULL, type = "message", id = "model_run"
+    )
+    shinyjs::disable("runModel")
     # model output
     mo <- runModel(
       initialConditions = initial_conditions,
@@ -192,6 +197,8 @@ server <- function(input, output, session) {
       contact = contact
     )
     modelOutput(mo)
+    removeNotification(id = "model_run", session = session)
+    shinyjs::enable("runModel")
   })
 
   # plot the model output: Incidence
