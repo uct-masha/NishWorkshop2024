@@ -14,13 +14,20 @@
 
 library(shiny)
 library(bslib)
-library(deSolve)
-library(tidyverse)
-library(sortable)
-library(shinyWidgets)
+library(PBSddesolve)
+library(dplyr)
+library(forcats)
+library(tidyr)
+library(stringr)
+library(tibble)
+library(lubridate)
+library(ggplot2)
+library(docstring) # Lets you use ?func for functions in this file
 
 # source the model in
 source("model.R")
+
+img_src <- as.character(paste0('data:image/png;base64,', readLines("logo_masha.txt")[[1]], collapse=""))
 
 # define the ui ####
 ui <- page_navbar(
@@ -29,7 +36,10 @@ ui <- page_navbar(
   inverse = TRUE,
   theme = bs_theme(
     version = 5,
-    base_font = font_google("Public Sans")
+    base_font = "Roboto",
+    base_font_google = NULL,
+    code_font = "Roboto Mono",
+    code_font_google = NULL
   ),
   header = tagList(
     tags$head(
@@ -45,13 +55,10 @@ ui <- page_navbar(
         layout_columns(
           col_widths = c(4, 8),
           card(
-            img(
-              class = "logo",
-              href="http://www.masha.uct.ac.za",
-              src="images/logo_masha.png"
-            ),
-            div(
-              includeMarkdown('www/markdown/about_masha.md')
+            img(src = img_src, class = "logo"),
+            tags$p("The ",
+                   a("Modelling and Simulation Hub, Africa (MASHA)", href="http://www.masha.uct.ac.za"),
+                   " is a research group at the University of Cape Town. MASHA’s research focus is the development and application of mathematical modelling and computer simulation to predict the dynamics and control of infectious diseases to evaluate the impact of policies aimed at reducing morbidity and mortality. Based in the Faculty of Science, MASHA’s research is closely integrated with other disciplines resulting in policy-driven and impactful scientific research."
             )
           ),
           accordion(
@@ -153,7 +160,7 @@ server <- function(input, output, session) {
                    )
   })
 
-  modelOutput <- reactiveVal(readRDS("initial_model_output.rds"))
+  modelOutput <- reactiveVal()
 
   observeEvent(input$runModel, {
     # model output
@@ -162,7 +169,6 @@ server <- function(input, output, session) {
       parameters = params(),
       contact = contact
     )
-    # saveRDS(mo, "initial_model_output.rds")
     modelOutput(mo)
   })
 

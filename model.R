@@ -1,9 +1,5 @@
-library(deSolve)
-library(plotly)
-library(tidyverse)
-library(docstring) # Lets you use ?func for functions in this file
 
-rates <- function(time, y, parms, contact) {
+rates <- function(time, y, parms) {
   #' Model rates function
   #'
   #' This function calculates the rates of change for the compartments in the model.
@@ -84,11 +80,10 @@ runModel <- function(startyear=2000, endyear=2040, initialConditions, parameters
   #' @param contact The contact matrix
   #' @return A tibble with the model results with `time`, `compartment`, and `population` columns
   timesteps <- seq(startyear, endyear, 1/365)
-  mod <- ode(y = unlist(initialConditions),
+  mod <- dde(y = unlist(initialConditions),
              times = timesteps,
              func = rates,
-             parms = parameters,
-             contact = contact) |>
+             parms = c(as.list(parameters), contact = contact)) |>
     as.data.frame() |>
     as_tibble() |>
     tidyr::pivot_longer(cols = !time, names_to = "compartment", values_to = "population") |>
@@ -104,7 +99,7 @@ plotModel <- function(mod) {
   #' This function plots the compartments of the model
   #'
   #' @param mod The model to plot
-  #' @return A plotly object
+  #' @return A ggplot plot
   plt <- ggplot2::ggplot(mod) +
     ggplot2::aes(x = time, y = population, color = compartment) +
     ggplot2::geom_line() +
@@ -112,7 +107,7 @@ plotModel <- function(mod) {
          color = "Compartment",
          x = "Time",
          y = "Population")
-  ggplotly(plt)
+  plt
 }
 
 plotPop <- function(mod) {
@@ -126,7 +121,7 @@ plotPop <- function(mod) {
          x="Time",
          y="Population",
          color="Age group")
-  ggplotly(plt)
+  plt
 }
 
 plotInc <- function(mod, byAge=TRUE) {
