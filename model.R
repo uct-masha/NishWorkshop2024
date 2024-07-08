@@ -198,8 +198,9 @@ costing <- function(mod, byAge=TRUE) {
     mutate(CostIntro = makeParameters()["cintro"],
            CostVax = Vax * makeParameters()["cvacc"],
            CostDel = Vax * makeParameters()["cdel"],
-           CostTr = Tr * makeParameters()["ctrt"]) |> view()
-
+           CostTr = Tr * makeParameters()["ctrt"],
+           CostTot = CostVax + CostDel + CostTr) |>
+    pivot_longer(cols=c(Inc, Tr, Vax, CostIntro, CostDel, CostVax, CostTr, CostTot), names_to="variable", values_to="Value")
 }
 
 makeInitialConditions <- function(
@@ -330,6 +331,8 @@ popage<-mod |> #create average population by age and year for denominator in plo
   mutate(Year = floor(time)) |>
   summarise(popyr=((last(pop) + first(pop))/2),
             .by=c(Year, age))
+
+costmod <- costing(mod)
 
 # plotModel(mod)
 plotInc(mod |> filter(time>=2024))
