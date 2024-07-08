@@ -247,31 +247,69 @@ server <- function(input, output, session) {
       summarise(Treatment=last(population) - first(population),
                 .by=c(Year, age))
 
+    discounted_costs <- costmod %>%
+      filter(variable == "CostTot") %>%
+      mutate(
+        discounting_factor = (1 + 0.03) ^ (2025 - Year),
+        discounted_value = Value * discounting_factor
+      ) %>%
+      select(Year, age, cost = Value, discounted_cost = discounted_value)
+
 
     result <- tbIncAges %>%
       left_join(tbProtAges, by = join_by(Year, age)) %>%
       left_join(tbTrAges, by = join_by(Year, age)) %>%
+      left_join(discounted_costs, by = join_by(Year, age)) %>%
       filter(between(Year, 2025, 2040)) %>%
       summarise(
         total_incidence = sum(Incidence),
         total_protected = sum(Protected),
         total_treated = sum(Treatment),
+        total_costs = sum(discounted_cost),
         .by = age
       )
     reactable(
-      result,
+      result %>% mutate(
+        age = factor(age),
+        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+      ),
       defaultColDef = colDef(
-        format = colFormat(digits = 0, separators = TRUE)
+        format = colFormat(digits = 0, separators = TRUE),
+        footerStyle = list(fontWeight = "bold")
       ),
       columns = list(
+        age = colDef(
+          minWidth = 200,
+          name = "Age Group",
+          footer = "Total (costs include Introduction cost)"
+        ),
         total_incidence = colDef(
-          name = "Total Incidence"
+          name = "Total Incidence",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
         ),
         total_protected = colDef(
-          name = "Total Protected"
+          name = "Total Protected",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
         ),
         total_treated = colDef(
-          name = "Total Treated"
+          name = "Total Treated",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
+        ),
+        total_costs = colDef(
+          name = "Total Costs",
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE) + input$cintro, digits = 0)
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+          }
         )
       )
     )
