@@ -278,10 +278,10 @@ makeParameters <- function(mu=0.01,
                            a=1,  # a=ageing=1yr
                            a2 = 1/3, #a2 = ageing over 3 years
                            timevax=2025,
-                           cvacc = 1.35,
-                           cdel = 3,
-                           ctrt = 1.2,
-                           cintro = 850000) {
+                           cvacc = 1.5,
+                           cdel = 1,
+                           ctrt = 0.5,
+                           cintro = 10000) {
   c(mu=mu,
     beta=beta,
     cov1=cov1,
