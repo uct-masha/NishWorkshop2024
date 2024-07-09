@@ -79,7 +79,7 @@ ui <- page_navbar(
             tags$ul(
             tags$li("The Reproductive Number (R0) of the disease is 12, with a latency period of 10 days and infectious period of 30 days"),
             tags$li("Having the disease confers life-long immunity. So, in the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
-            tags$li("Diagnosis and treatment can reduce the infectious period to 10 days. For example, if 70% of cases are diagnosed and treated, the effective Reproductive Number (Rₑ) is reduced to 6."),
+            tags$li("All infections are symptomatic. Diagnosis and treatment can reduce the infectious period to 10 days. For example, if 70% of cases are diagnosed and treated, the effective Reproductive Number (Rₑ) is reduced to 6."),
             ),
             tags$p("A new vaccine has been developed that is available globally."),
             tags$ul(
