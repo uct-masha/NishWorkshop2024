@@ -140,10 +140,13 @@ plotInc <- function(mod, byAge=TRUE) {
     ) %>%
     ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=age)) +
     geom_col(position="dodge") +
-    labs(title="Incidence by age group",
-         x="Year",
-         y="Incidence per 1000 population",
-         fill="Age group")
+    labs(
+      title="Incidence by age group",
+      x="Year",
+      y="Incidence per 1000 population",
+      fill="Age group"
+    ) +
+    theme(text=element_text(size=16, family = "Roboto"))
 }
 
 
@@ -164,10 +167,13 @@ plotProt <- function(mod, byAge=TRUE) {
     ) %>%
     ggplot(aes(x=Year, y=Protected/popyr, fill=age)) +
     geom_col(position="dodge") +
-    labs(title="Population protected by age group (%)",
-         x="Year",
-         y="Proportion of  population",
-         fill="Age group")
+    labs(
+      title="Population protected by age group (%)",
+      x="Year",
+      y="Proportion of  population",
+      fill="Age group"
+    ) +
+    theme(text=element_text(size=16, family = "Roboto"))
 }
 
 
@@ -186,10 +192,13 @@ plotTr <- function(mod, byAge=TRUE) {
     ) %>%
     ggplot(aes(x=Year, y=Incidence, fill=age)) +
     geom_col(position="dodge") +
-    labs(title="Treatment by age group",
-         x="Year",
-         y="Treatment",
-         fill="Age group")
+    labs(
+      title="Treatment by age group",
+      x="Year",
+      y="Treatment",
+      fill="Age group"
+    ) +
+    theme(text=element_text(size=16, family = "Roboto"))
 }
 
 costing <- function(mod, byAge=TRUE) {
