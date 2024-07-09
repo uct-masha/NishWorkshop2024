@@ -208,6 +208,7 @@ server <- function(input, output, session) {
   })
 
   modelOutput <- reactiveVal(mo_initial)
+  cost_table <- reactiveVal(costing(mod = mo_initial, params = makeParameters()))
 
   observeEvent(input$runModel, {
     showNotification(span(h4(icon("hourglass-half"), "Model Running..."), "typically runs in 2 to 10 secs."),
@@ -220,7 +221,9 @@ server <- function(input, output, session) {
       parameters = params(),
       contact = contact
     )
+    costs <- costing(mod = mo, params = params())
     modelOutput(mo)
+    cost_table(costs)
     removeNotification(id = "model_run", session = session)
     shinyjs::enable("runModel")
   })
@@ -228,7 +231,7 @@ server <- function(input, output, session) {
   # cost table
   output$model_table <- renderReactable({
 
-    cost_tbl <- costmod %>%
+    cost_tbl <- cost_table() %>%
       pivot_wider(
         names_from = "variable",
         values_from = "Value"
@@ -243,6 +246,9 @@ server <- function(input, output, session) {
         total_costs = sum(total_costs_discounted),
         .by = age
       )
+
+    costs_total <- sum(cost_tbl$total_costs) + as.numeric(input$cintro)
+    total_cost_per_case = costs_total / sum(cost_tbl$total_incidence)
 
     reactable(
       cost_tbl %>% mutate(
@@ -264,8 +270,7 @@ server <- function(input, output, session) {
           name = "Cost per Incidence",
           format = colFormat(digits = 2),
           footer = function(values) {
-            result <- round(sum(values, na.rm = TRUE), digits = 2)
-            sprintf("$%s", format(result, big.mark = ","))
+            sprintf("$%s", format(round(total_cost_per_case, digits = 2), big.mark = ","))
           }
         ),
         total_incidence = colDef(
