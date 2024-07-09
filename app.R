@@ -25,6 +25,7 @@ library(ggplot2)
 library(docstring) # Lets you use ?func for functions in this file
 library(reactable)
 library(shinycssloaders)
+library(plotly)
 
 # source the model in
 source("model.R")
@@ -90,36 +91,35 @@ ui <- page_navbar(
       ),
       nav_panel(
         title = "Run Model",
-        accordion(
-          open = TRUE,
           fluidRow(
             column(3, fluidRow(
-              column(12,
-                     # sliderInput(inputId = "beta", label = "Probability of transmission", value = 10, min = 0, max = 100, post = "%"),
-                     # year to start the vaccination 2024:2040
-                     p("Vaccination"),
-                     numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2025, min = 2025, max = 2025),
-                     sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 0, min = 0, max = 100, post = "%"),
-                     sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
-                     sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 70, min = 0, max = 100, post = "%"),
-                     p("Costs in USD"),
-                     numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.5, max = 1.35),
-                     numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 1, min = 1, max = 1000),
-                     numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.5, min = 1, max = 1000),
-                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 500000, min = 1, max = 10000000),
-                     # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
+            column(
+              width = 12,
+              accordion(
+                open = 1,
+                accordion_panel(
+                  title = "Vaccination",
+                  numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2025, min = 2025, max = 2025),
+                  sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 0, min = 0, max = 100, post = "%"),
+                  sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
+                  sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 70, min = 0, max = 100, post = "%")
+                ),
+                accordion_panel(
+                  title = "Costs in USD",
+                  numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.5, max = 1.35),
+                  numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 1, min = 1, max = 1000),
+                  numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.5, min = 1, max = 1000),
+                  numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 500000, min = 1, max = 10000000),
+                )
+              ),
+              br(),
+              layout_columns(actionButton(inputId = "runModel", label = "Run Model", class = "btn-success"))
+              )
 
-                     # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
-                     # numericInput(inputId = "rr", label = "Natural recovery rate", value = 1, min = 1, max = 10),
-                     # sliderInput(inputId = "ve1", label = "Vaccine efficacy", value = 100, min = 0, max = 100, post = "%"),
-                     # numericInput(inputId = "rt", label = "Treatment seeking rate", value = 1, min = 1, max = 10),
-                     # numericInput(inputId = "rtr", label = "Treatment recovery rate", value = 1, min = 1, max = 10),
-                     actionButton(inputId = "runModel", label = "Run Model", class = "btn btn-success")
-               )
+
             )),
             column(12-3, fluidRow(
               card(
-                full_screen = TRUE,
                 card_header("Outputs are shown as the total for the full model timeframe (2025 - 2040)"),
                 reactableOutput(outputId = "model_table") %>%
                   withSpinner()
@@ -128,23 +128,22 @@ ui <- page_navbar(
                 full_screen = TRUE,
                 nav_panel(
                   title = "Incidence",
-                  plotOutput(outputId = "model_plot_incidence") %>%
+                  plotlyOutput(outputId = "model_plot_incidence") %>%
                     withSpinner()
                 ),
                 nav_panel(
                   title = "Protected",
-                  plotOutput(outputId = "model_plot_protected") %>%
+                  plotlyOutput(outputId = "model_plot_protected") %>%
                     withSpinner()
                 ),
                 nav_panel(
                   title = "Treated",
-                  plotOutput("model_plot_treated") %>%
+                  plotlyOutput("model_plot_treated") %>%
                     withSpinner()
                 )
               )
             ))
           )
-        )
       )
     )
   ),
@@ -248,7 +247,8 @@ server <- function(input, output, session) {
     reactable(
       cost_tbl %>% mutate(
         age = factor(age),
-        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4"),
+        cost_per_case = total_costs / total_incidence
       ),
       defaultColDef = colDef(
         format = colFormat(digits = 0, separators = TRUE),
@@ -260,18 +260,26 @@ server <- function(input, output, session) {
           name = "Age Group",
           footer = "Total (costs include Introduction cost)"
         ),
+        cost_per_case = colDef(
+          name = "Cost per Incidence",
+          format = colFormat(digits = 2),
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 2)
+            sprintf("$%s", format(result, big.mark = ","))
+          }
+        ),
         total_incidence = colDef(
           name = "Total Incidence",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE), digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+            sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
           }
         ),
         total_costs = colDef(
           name = "Total Costs",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE) + input$cintro, digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+            sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
           }
         )
       )
@@ -279,17 +287,17 @@ server <- function(input, output, session) {
   })
 
   # plot the model output: Incidence
-  output$model_plot_incidence <- renderPlot({
+  output$model_plot_incidence <- renderPlotly({
     plotInc(modelOutput() |> filter(time>=2022))
   })
 
   # plot the model output: Protected
-  output$model_plot_protected <- renderPlot({
+  output$model_plot_protected <- renderPlotly({
     plotProt(modelOutput() |> filter(time>=2022))
   })
 
   # plot the model output: Treatment
-  output$model_plot_treated <- renderPlot({
+  output$model_plot_treated <- renderPlotly({
     plotTr(modelOutput() |> filter(time>=2022))
   })
 }

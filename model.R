@@ -113,84 +113,120 @@ plotModel <- function(mod) {
 plotPop <- function(mod) {
   plt <- mod |>
     filter(compartment |> str_starts("C", negate = T)) |>
-    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric()) |>
-    summarise(pop=sum(population), .by=c(time,age)) |>
-    ggplot(aes(x=time, y=pop, color=factor(age))) +
+    mutate(age = str_extract(compartment, pattern = "\\d+$") |> as.numeric()) |>
+    summarise(pop = sum(population), .by = c(time, age)) |>
+    ggplot(aes(x = time, y = pop, color = factor(age))) +
     geom_line() +
-    labs(title="Population by age group",
-         x="Time",
-         y="Population",
-         color="Age group")
+    labs(
+      title = "Population by age group",
+      x = "Time",
+      y = "Population",
+      color = "Age group"
+    )
   plt
 }
 
-plotInc <- function(mod, byAge=TRUE) {
+plotInc <- function(mod, byAge = TRUE) {
   tbIncAges <- mod |>
-    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-           Year=year(date_decimal(time)),
-           Month=month(date_decimal(time))) |>
+    mutate(
+      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
+      Year = year(date_decimal(time)),
+      Month = month(date_decimal(time))
+    ) |>
     filter(compartment |> str_starts("CInc")) |>
-    summarise(Incidence=(last(population) - first(population)),
-              .by=c(Year, age)) |>
-    left_join(popage, by=c("Year", "age"))
-  tbIncAges |>
+    summarise(
+      Incidence = (last(population) - first(population)),
+      .by = c(Year, age)
+    ) |>
+    left_join(popage, by = c("Year", "age"))
+
+  plt_data <- tbIncAges |>
     mutate(
       age = factor(age),
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    ) %>%
-    ggplot(aes(x=Year, y=Incidence/popyr*1000, fill=age)) +
-    geom_col(position="dodge") +
-    labs(title="Incidence by age group",
-         x="Year",
-         y="Incidence per 1000 population",
-         fill="Age group")
+    )
+
+    plt <-  ggplot(data = plt_data, aes(x = Year, y = Incidence / popyr * 1000, fill = age)) +
+      geom_col(position = "dodge") +
+      labs(
+        title = "Incidence by age group",
+        x = "Year",
+        y = "Incidence per 1000 population",
+        fill = "Age group"
+      ) +
+      theme(text = element_text(size = 12))
+
+    plotly::ggplotly(plt)
 }
 
 
-plotProt <- function(mod, byAge=TRUE) {
+plotProt <- function(mod, byAge = TRUE) {
   tbIncAges <- mod |>
-    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-           Year=year(date_decimal(time)),
-           Month=month(date_decimal(time))) |>
-    filter(compartment %in% c("R1", "R2", "R3", "R4",  "VA2", "VA3", "VB3", "VA4", "VB4"),
-           Year==(time)) |>
-    summarise(Protected=sum(population),
-              .by=c(Year, age)) |>
-    left_join(popage, by=c("Year", "age"))
-  tbIncAges |>
+    mutate(
+      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
+      Year = year(date_decimal(time)),
+      Month = month(date_decimal(time))
+    ) |>
+    filter(
+      compartment %in% c("R1", "R2", "R3", "R4", "VA2", "VA3", "VB3", "VA4", "VB4"),
+      Year == (time)
+    ) |>
+    summarise(
+      Protected = sum(population),
+      .by = c(Year, age)
+    ) |>
+    left_join(popage, by = c("Year", "age"))
+
+  plt_data <- tbIncAges |>
     mutate(
       age = factor(age),
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    ) %>%
-    ggplot(aes(x=Year, y=Protected/popyr, fill=age)) +
-    geom_col(position="dodge") +
+    )
+
+  plt <- ggplot(data = plt_data, aes(x = Year, y = Protected / popyr, fill = age)) +
+    geom_col(position = "dodge") +
     scale_y_continuous(labels = scales::percent_format()) +
-    labs(title="Population protected by age group (%)",
-         x="Year",
-         y="Proportion of  population",
-         fill="Age group")
+    labs(
+      title = "Population protected by age group (%)",
+      x = "Year",
+      y = "Proportion of  population",
+      fill = "Age group"
+    ) +
+    theme(text = element_text(size = 12))
+
+  plotly::ggplotly(plt)
 }
 
 
-plotTr <- function(mod, byAge=TRUE) {
+plotTr <- function(mod, byAge = TRUE) {
   tbIncAges <- mod |>
-    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
-           Year=year(date_decimal(time)),
-           Month=month(date_decimal(time))) |>
+    mutate(
+      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
+      Year = year(date_decimal(time)),
+      Month = month(date_decimal(time))
+    ) |>
     filter(compartment |> str_starts("CTr")) |>
-    summarise(Incidence=last(population) - first(population),
-              .by=c(Year, age))
-  tbIncAges |>
+    summarise(
+      Incidence = last(population) - first(population),
+      .by = c(Year, age)
+    )
+  plt_data <- tbIncAges |>
     mutate(
       age = factor(age),
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    ) %>%
-    ggplot(aes(x=Year, y=Incidence, fill=age)) +
-    geom_col(position="dodge") +
-    labs(title="Treatment by age group",
-         x="Year",
-         y="Treatment",
-         fill="Age group")
+    )
+
+  plt <- ggplot(data = plt_data, aes(x = Year, y = Incidence, fill = age)) +
+    geom_col(position = "dodge") +
+    labs(
+      title = "Treatment by age group",
+      x = "Year",
+      y = "Treatment",
+      fill = "Age group"
+    ) +
+    theme(text = element_text(size = 12))
+
+  plotly::ggplotly(plt)
 }
 
 costing <- function(mod, byAge=TRUE) {
@@ -208,11 +244,13 @@ costing <- function(mod, byAge=TRUE) {
     )) |>
     select(-compartment) |>
     pivot_wider(names_from=variable, values_from=Value) |>
-    mutate(CostIntro = makeParameters()["cintro"],
-           CostVax = Vax * makeParameters()["cvacc"],
-           CostDel = Vax * makeParameters()["cdel"],
-           CostTr = Tr * makeParameters()["ctrt"],
-           CostTot = CostVax + CostDel + CostTr) |>
+    mutate(
+      CostIntro = makeParameters()["cintro"],
+      CostVax = Vax * makeParameters()["cvacc"],
+      CostDel = Vax * makeParameters()["cdel"],
+      CostTr = Tr * makeParameters()["ctrt"],
+      CostTot = if_else(is.na(CostVax), 0, CostVax) + if_else(is.na(CostDel), 0, CostDel) + if_else(is.na(CostTr), 0, CostTr)
+    ) |>
     pivot_longer(cols=c(Inc, Tr, Vax, CostIntro, CostDel, CostVax, CostTr, CostTot), names_to="variable", values_to="Value")
 }
 
