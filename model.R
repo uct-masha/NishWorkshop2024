@@ -229,26 +229,26 @@ plotTr <- function(mod, byAge = TRUE) {
   plotly::ggplotly(plt)
 }
 
-costing <- function(mod, byAge=TRUE) {
+costing <- function(mod, params, byAge=TRUE) {
   tbOutAges <- mod |>
     mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric(),
            Year=year(date_decimal(time)),
            Month=month(date_decimal(time))) |>
-    filter(compartment |> str_starts("C"), Year >= makeParameters()["timevax"]) |>
+    filter(compartment |> str_starts("C"), Year >= params["timevax"]) |>
     summarise(Value=last(population) - first(population),
               .by=c(Year, age, compartment)) |>
-   mutate(variable = case_when(
-     str_starts(compartment, "CInc") ~ "Inc",
-     str_starts(compartment,"CTr") ~ "Tr",
-     str_starts(compartment, "CVax") ~ "Vax"
+    mutate(variable = case_when(
+      str_starts(compartment, "CInc") ~ "Inc",
+      str_starts(compartment,"CTr") ~ "Tr",
+      str_starts(compartment, "CVax") ~ "Vax"
     )) |>
     select(-compartment) |>
     pivot_wider(names_from=variable, values_from=Value) |>
     mutate(
-      CostIntro = makeParameters()["cintro"],
-      CostVax = Vax * makeParameters()["cvacc"],
-      CostDel = Vax * makeParameters()["cdel"],
-      CostTr = Tr * makeParameters()["ctrt"],
+      CostIntro = params["cintro"],
+      CostVax = Vax * params["cvacc"],
+      CostDel = Vax * params["cdel"],
+      CostTr = Tr * params["ctrt"],
       CostTot = if_else(is.na(CostVax), 0, CostVax) + if_else(is.na(CostDel), 0, CostDel) + if_else(is.na(CostTr), 0, CostTr)
     ) |>
     pivot_longer(cols=c(Inc, Tr, Vax, CostIntro, CostDel, CostVax, CostTr, CostTot), names_to="variable", values_to="Value")
@@ -390,7 +390,7 @@ popage<-mod |> #create average population by age and year for denominator in plo
   summarise(popyr=((last(pop) + first(pop))/2),
             .by=c(Year, age))
 
-costmod <- costing(mod)
+#costmod <- costing(mod)
 
 # plotModel(mod)
 plotInc(mod |> filter(time>=2024))
