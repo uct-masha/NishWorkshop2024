@@ -25,6 +25,7 @@ library(ggplot2)
 library(docstring) # Lets you use ?func for functions in this file
 library(reactable)
 library(shinycssloaders)
+library(plotly)
 
 # source the model in
 source("model.R")
@@ -126,17 +127,17 @@ ui <- page_navbar(
                 full_screen = TRUE,
                 nav_panel(
                   title = "Incidence",
-                  plotOutput(outputId = "model_plot_incidence") %>%
+                  plotlyOutput(outputId = "model_plot_incidence") %>%
                     withSpinner()
                 ),
                 nav_panel(
                   title = "Protected",
-                  plotOutput(outputId = "model_plot_protected") %>%
+                  plotlyOutput(outputId = "model_plot_protected") %>%
                     withSpinner()
                 ),
                 nav_panel(
                   title = "Treated",
-                  plotOutput("model_plot_treated") %>%
+                  plotlyOutput("model_plot_treated") %>%
                     withSpinner()
                 )
               )
@@ -261,14 +262,14 @@ server <- function(input, output, session) {
           name = "Total Incidence",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE), digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+            sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
           }
         ),
         total_costs = colDef(
           name = "Total Costs",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE) + input$cintro, digits = 0)
-            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
+            sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
           }
         )
       )
@@ -276,17 +277,17 @@ server <- function(input, output, session) {
   })
 
   # plot the model output: Incidence
-  output$model_plot_incidence <- renderPlot({
+  output$model_plot_incidence <- renderPlotly({
     plotInc(modelOutput() |> filter(time>=2022))
   })
 
   # plot the model output: Protected
-  output$model_plot_protected <- renderPlot({
+  output$model_plot_protected <- renderPlotly({
     plotProt(modelOutput() |> filter(time>=2022))
   })
 
   # plot the model output: Treatment
-  output$model_plot_treated <- renderPlot({
+  output$model_plot_treated <- renderPlotly({
     plotTr(modelOutput() |> filter(time>=2022))
   })
 }
