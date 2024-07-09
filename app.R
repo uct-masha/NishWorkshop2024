@@ -262,7 +262,8 @@ server <- function(input, output, session) {
       ),
       defaultColDef = colDef(
         format = colFormat(digits = 0, separators = TRUE),
-        footerStyle = list(fontWeight = "bold")
+        footerStyle = list(fontWeight = "bold"),
+        headerClass = "header"
       ),
       columns = list(
         age = colDef(

@@ -146,17 +146,34 @@ plotInc <- function(mod, byAge = TRUE) {
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
     )
 
-    plt <-  ggplot(data = plt_data, aes(x = Year, y = Incidence / popyr * 1000, fill = age)) +
+    plt <-  ggplot(
+      data = plt_data,
+      aes(
+        x = Year, y = Incidence / popyr * 1000, fill = age,
+        text = sprintf(
+          "Incidence: %s<br>Year: %s<br>Age group: %s",
+          format(round(Incidence / popyr * 1000, digits = 0), big.mark = ",", scientific = FALSE),
+          Year,
+          age
+        )
+      )
+    ) +
       geom_col(position = "dodge") +
+      geom_hline(yintercept = 0) +
+      scale_x_continuous(breaks = seq(2022, 2040, 3)) +
       labs(
         title = "Incidence by age group",
         x = "Year",
         y = "Incidence per 1000 population",
         fill = "Age group"
       ) +
-      theme(text = element_text(size = 12))
+      theme_minimal() +
+      theme(
+        text = element_text(size = 12),
+        axis.title.y = element_text(margin = margin(t = 0, r = 40, b = 0, l = 0))
+      )
 
-    plotly::ggplotly(plt)
+    plotly::ggplotly(plt, tooltip = c("text"))
 }
 
 
@@ -183,18 +200,35 @@ plotProt <- function(mod, byAge = TRUE) {
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
     )
 
-  plt <- ggplot(data = plt_data, aes(x = Year, y = Protected / popyr, fill = age)) +
+  plt <- ggplot(
+    data = plt_data,
+    aes(
+      x = Year, y = Protected / popyr, fill = age,
+      text = sprintf(
+        "Population protected: %0.0f%%<br>Year: %s<br>Age group: %s",
+        as.numeric(format(round((Protected / popyr) * 100, digits = 0), big.mark = ",", scientific = FALSE)),
+        Year,
+        age
+      )
+    )
+  ) +
     geom_col(position = "dodge") +
     scale_y_continuous(labels = scales::percent_format()) +
+    geom_hline(yintercept = 0) +
+    scale_x_continuous(breaks = seq(2022, 2040, 3)) +
     labs(
       title = "Population protected by age group (%)",
       x = "Year",
       y = "Proportion of  population",
       fill = "Age group"
     ) +
-    theme(text = element_text(size = 12))
+    theme_minimal() +
+    theme(
+      text = element_text(size = 12),
+      axis.title.y = element_text(margin = margin(t = 0, r = 60, b = 0, l = 0))
+    )
 
-  plotly::ggplotly(plt)
+  plotly::ggplotly(plt, tooltip = c("text"))
 }
 
 
@@ -216,17 +250,35 @@ plotTr <- function(mod, byAge = TRUE) {
       age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
     )
 
-  plt <- ggplot(data = plt_data, aes(x = Year, y = Incidence, fill = age)) +
+  plt <- ggplot(
+    data = plt_data,
+    aes(
+      x = Year, y = Incidence, fill = age,
+      text = sprintf(
+        "Treatment: %s<br>Year: %s<br>Age group: %s",
+        format(round(Incidence, digits = 0), big.mark = ",", scientific = FALSE),
+        Year,
+        age
+      )
+    )
+  ) +
     geom_col(position = "dodge") +
+    scale_y_continuous(labels = scales::comma) +
+    geom_hline(yintercept = 0) +
+    scale_x_continuous(breaks = seq(2022, 2040, 3)) +
     labs(
       title = "Treatment by age group",
       x = "Year",
       y = "Treatment",
       fill = "Age group"
     ) +
-    theme(text = element_text(size = 12))
+    theme_minimal() +
+    theme(
+      text = element_text(size = 12),
+      axis.title.y = element_text(margin = margin(t = 0, r = 40, b = 0, l = 0))
+    )
 
-  plotly::ggplotly(plt)
+  plotly::ggplotly(plt, tooltip = c("text"))
 }
 
 costing <- function(mod, params, byAge=TRUE) {
