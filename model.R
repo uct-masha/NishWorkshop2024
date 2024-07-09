@@ -11,7 +11,7 @@ rates <- function(time, y, parms) {
   popVec <- getPopVec(y)
   pop <- sum(popVec)
   with(as.list(c(y, parms)), {
-    Infectious <- c((In1 + It1), (In2 + It2), (In3 + It3), (In4 + It4))
+    Infectious <- c((In1 + It1 + Tr1), (In2 + It2 + Tr2), (In3 + It3 + Tr3), (In4 + It4 + Tr4))
     lambda <- as.double(beta*contact%*%Infectious/popVec)
     if (time <= timevax) {cov1 <- cov2 <- 0}
 

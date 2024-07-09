@@ -72,19 +72,23 @@ ui <- page_navbar(
                    " is a research group at the University of Cape Town. MASHA’s research focus is the development and application of mathematical modelling and computer simulation to predict the dynamics and control of infectious diseases to evaluate the impact of policies aimed at reducing morbidity and mortality. Based in the Faculty of Science, MASHA’s research is closely integrated with other disciplines resulting in policy-driven and impactful scientific research."),
           ),
           div(
-            tags$h1("About the App"),
-            tags$p("This application has been developed to exemplify how mathematical modelling can be used to provide scientific evidence to support decisions on vaccine introduction. In this application, a transmission model of a disease X has been developed for a population where the disease is currently transmitting.
-            Disease X has been circulating in the population for many years. It has the following properties:"),
+            tags$h3("About VaxSim"),
+            tags$p("VaxSim is computer simulation that has been developed to exemplify how mathematical modelling can be used to provide scientific evidence to support decisions on vaccine introduction. In this simulation, a transmission model of a Disease X has been developed for a population where the disease is currently transmitting."),
+            tags$h3("Population and disease characteristics"),
+            tags$p("The study population is a country of 50 million people in 2024. Disease X has been circulating in the population for many years. The disease has the following properties:"),
             tags$ul(
-            tags$li("Having the disease confers life-long immunity (similar to measles)"),
-            tags$li("In the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
-            tags$li("A new vaccine has been developed that is available globally."),
+            tags$li("The Reproductive Number (R0) of the disease is 12, with a latency period of 10 days and infectious period of 30 days"),
+            tags$li("Having the disease confers life-long immunity. So, in the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
+            tags$li("Diagnosis and treatment can reduce the infectious period to 10 days. For example, if 70% of cases are diagnosed and treated, the effective Reproductive Number (Rₑ) is reduced to 6."),
+            ),
+            tags$p("A new vaccine has been developed that is available globally."),
+            tags$ul(
             tags$li("This vaccine can be delivered in 1 or 2 dose format, where the first dose has protection efficacy of 85% and having both doses confers full (100%) protection."),
             tags$li("The recommended schedule from the Global Health Authority is that the two doses are delivered at 1 year and 2 years of age respectively."),
             tags$li("The planned introduction of the vaccine is 2025."),
             tags$li("The vaccine is not yet included in the national immunisation schedule.")
                      ),
-            tags$p("How to use the App"),
+            tags$h3("How to use the App"),
             tags$p("Use the sliders and input boxes on the left panel to select intended operational coverage of 1 or both doses of vaccine, and the costs of introducing the vaccine. Once you have made your selection, click the run button to run the transmission model to see the impact of vaccination on disease incidence, cases treated and the protection levels in the population. Use the summary table provided to assess the total cases and costs of vaccination for every scenario you create. You can use this output to generate the cases averted by vaccination and make a ratio of cost per case averted.")
           )
         )
