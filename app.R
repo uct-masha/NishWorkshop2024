@@ -272,7 +272,7 @@ server <- function(input, output, session) {
           name = "Total Incidence",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE), digits = 0)
-            sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
+            sprintf("%s", format(result, big.mark = ",", nsmall = 0))
           }
         ),
         total_costs = colDef(
