@@ -33,7 +33,7 @@ img_src <- as.character(paste0('data:image/png;base64,', readLines("logo_masha.t
 
 # define the ui ####
 ui <- page_navbar(
-  title = "Disease Transmission Model",
+  title = "VaxSim",
   bg = "#373A40",
   inverse = TRUE,
   theme = bs_theme(
@@ -101,12 +101,12 @@ ui <- page_navbar(
                      numericInput(inputId = "yearStart", label = "Year to start vaccination", value = 2025, min = 2025, max = 2025),
                      sliderInput(inputId = "cov1", label = "Vaccine 1 coverage", value = 0, min = 0, max = 100, post = "%"),
                      sliderInput(inputId = "cov2", label = "Vaccine 2 coverage", value = 0, min = 0, max = 100, post = "%"),
-                     sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 100, min = 0, max = 100, post = "%"),
+                     sliderInput(inputId = "pt", label = "Probability of seeking treatment", value = 70, min = 0, max = 100, post = "%"),
                      p("Costs in USD"),
                      numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.5, max = 1.35),
                      numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 1, min = 1, max = 1000),
                      numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.5, min = 1, max = 1000),
-                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 1000, min = 1, max = 10000000),
+                     numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 500000, min = 1, max = 10000000),
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
 
                      # numericInput(inputId = "rs", label = "Incubation rate", value = 1, min = 1, max = 10),
@@ -179,7 +179,7 @@ ui <- page_navbar(
 )
 
 # global parameters ####
-initial_conditions <- makeInitialConditions()
+initial_conditions <- rescalePop(unlist(makeInitialConditions()), 50000000)
 contact <- makeContactMatrix(initialConditions = initial_conditions)
 mo_initial <- runModel(
   initialConditions = initial_conditions,

@@ -164,6 +164,7 @@ plotProt <- function(mod, byAge=TRUE) {
     ) %>%
     ggplot(aes(x=Year, y=Protected/popyr, fill=age)) +
     geom_col(position="dodge") +
+    scale_y_continuous(labels = scales::percent_format()) +
     labs(title="Population protected by age group (%)",
          x="Year",
          y="Proportion of  population",
@@ -231,6 +232,8 @@ rescalePop <- function(popListCurrent, popTotal) {
   lapply(popListCurrent, function(x) (x*popTotal)/popTotalCurrent)
 }
 
+
+
 # mod |>
 #   filter(time==max(time)) |> pull(population, name = compartment) |>
 #   saveRDS("ic.rds")
@@ -290,17 +293,18 @@ makeContactMatrix <- function(initialConditions) {
   contact
 }
 
-makeParameters <- function(mu=0.01,
-                           beta=0.5,
-                           cov1=0,
-                           cov2=0,
-                           pt=1,
-                           rs=1,
-                           rr=1,
+makeParameters <- function(mub= 1/45,
+                           mu=1/65,
+                           beta=61,
+                           cov1=0.0,
+                           cov2=0.0,
+                           pt=0.7,
+                           rs=365/10,
+                           rr=365/30,
                            ve1=0.85, #Vaccine efficacy dose A; dose B = 100%
                            tau1 = 0, #No waning as vaccine offers lifelong protection
-                           rt=1,
-                           rtr=1,
+                           rt=365/2,
+                           rtr=365/7,
                            a=1,  # a=ageing=1yr
                            a2 = 1/3, #a2 = ageing over 3 years
                            timevax=2025,
@@ -308,8 +312,9 @@ makeParameters <- function(mu=0.01,
                            cvacc = 1.5,
                            cdel = 1,
                            ctrt = 0.5,
-                           cintro = 10000) {
-  c(mu=mu,
+                           cintro = 500000) {
+  c(mub=mub,
+    mu=mu,
     beta=beta,
     cov1=cov1,
     cov2=cov2,
@@ -331,10 +336,13 @@ makeParameters <- function(mu=0.01,
   )
 }
 
-initialConditions <- makeInitialConditions()
+initialConditions <- rescalePop(unlist(makeInitialConditions()), 50000000)
 contact <- makeContactMatrix(initialConditions = initialConditions)
 
-mod <- runModel(startyear=2000, endyear=2040, initialConditions=initialConditions, parameters=makeParameters(), contact = contact)
+mod <- runModel(startyear=2000, endyear=2040,
+                initialConditions=initialConditions,
+                parameters=makeParameters(),
+                contact = contact)
 
 popage<-mod |> #create average population by age and year for denominator in plots
   filter(compartment |> str_starts("C", negate = T)) |>
@@ -348,3 +356,5 @@ costmod <- costing(mod)
 
 # plotModel(mod)
 plotInc(mod |> filter(time>=2024))
+plotProt(mod |> filter(time>=2015))
+
