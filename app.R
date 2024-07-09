@@ -245,7 +245,8 @@ server <- function(input, output, session) {
     reactable(
       cost_tbl %>% mutate(
         age = factor(age),
-        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
+        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4"),
+        cost_per_case = total_costs / total_incidence
       ),
       defaultColDef = colDef(
         format = colFormat(digits = 0, separators = TRUE),
@@ -256,6 +257,14 @@ server <- function(input, output, session) {
           minWidth = 200,
           name = "Age Group",
           footer = "Total (costs include Introduction cost)"
+        ),
+        cost_per_case = colDef(
+          name = "Cost per Incidence",
+          format = colFormat(digits = 2),
+          footer = function(values) {
+            result <- round(sum(values, na.rm = TRUE), digits = 2)
+            sprintf("$%s", format(result, big.mark = ","))
+          }
         ),
         total_incidence = colDef(
           name = "Total Incidence",
