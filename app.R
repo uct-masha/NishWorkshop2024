@@ -118,7 +118,6 @@ ui <- page_navbar(
             )),
             column(12-3, fluidRow(
               card(
-                full_screen = TRUE,
                 card_header("Outputs are shown as the total for the full model timeframe (2025 - 2040)"),
                 reactableOutput(outputId = "model_table") %>%
                   withSpinner()
