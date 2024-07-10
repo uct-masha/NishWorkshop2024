@@ -110,9 +110,9 @@ ui <- page_navbar(
                 ),
                 accordion_panel(
                   title = "Costs in USD",
-                  numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 1.5, max = 1.35),
-                  numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 1, min = 1, max = 1000),
-                  numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.5, min = 1, max = 1000),
+                  numericInput(inputId = "cvacc", label = "Cost per vaccine", value = 1.35, min = 0, max = 1.35),
+                  numericInput(inputId = "cdel", label = "Cost per vaccine delivered", value = 0.2, min = 0, max = 1000),
+                  numericInput(inputId = "ctrt", label = "Cost per case treated", value = 0.75, min = 1, max = 1000),
                   numericInput(inputId = "cintro", label = "Introduction cost (once-off)", value = 500000, min = 1, max = 10000000),
                 )
               ),
@@ -124,7 +124,7 @@ ui <- page_navbar(
             )),
             column(12-3, fluidRow(
               card(
-                card_header("Outputs are shown as the total for the full model timeframe (2025 - 2040)"),
+                card_header("Outputs are shown as the total for the full model timeframe (2025 - 2040). All costs are discounted at 3% p.a."),
                 reactableOutput(outputId = "model_table") %>%
                   withSpinner()
               ),
@@ -272,7 +272,7 @@ server <- function(input, output, session) {
           footer = "Total (costs include Introduction cost)"
         ),
         cost_per_case = colDef(
-          name = "Cost per Incidence",
+          name = "Cost per Infection",
           format = colFormat(digits = 2),
           footer = function(values) {
             sprintf("$%s", format(round(total_cost_per_case, digits = 2), big.mark = ","))
