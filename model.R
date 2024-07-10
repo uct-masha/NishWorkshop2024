@@ -75,6 +75,22 @@ rates <- function(time, y, parms) {
   })
 }
 
+postProc <- function(mod) {
+  #' Post-process the model
+  #' @param mod The model to post-process
+  #' @return A tibble with the post-processed results
+  popage <- mod |> #create average population by age and year for denominator in plots
+    filter(compartment |> str_starts("C", negate = T)) |>
+    mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric()) |>
+    summarise(pop=sum(population), .by=c(time,age)) |>
+    mutate(Year = floor(time)) |>
+    summarise(popyr=((last(pop) + first(pop))/2),
+              .by=c(Year, age))
+
+}
+
+ageGroupNames <- function(){"0-1, 1-2, 2-5, 5+" |> str_split(", ") |> unlist()}
+
 runModel <- function(startyear=2000, endyear=2040, initialConditions, parameters, contact) {
   #' Run the model
   #' @param startyear The start year of the model
@@ -82,156 +98,257 @@ runModel <- function(startyear=2000, endyear=2040, initialConditions, parameters
   #' @param initialConditions The initial conditions of the model (flat vector)
   #' @param parameters The parameters of the model
   #' @param contact The contact matrix
-  #' @return A tibble with the model results with `time`, `compartment`, and `population` columns
+  #' @return a list with the daily and annual result tibbles. The daily tibble has the following columns: time, compartment, population, totpop. The annual tibble has the following columns: Year, compartment, population
   timesteps <- seq(startyear, endyear, 1/365)
-  mod <- dde(y = unlist(initialConditions),
+  # The parameters need to be a list and they need to include contact
+  parms = as.list(parameters)
+  parms$contact = contact
+
+  moRaw <- dde(y = unlist(initialConditions),
              times = timesteps,
              func = rates,
-             parms = c(as.list(parameters), contact = contact)) |>
+             parms = parms)
+
+  # Put into long format tibble with Pop "compartment" used for per capita calculations
+  moDaily <- moRaw |>
     as.data.frame() |>
     as_tibble() |>
-    tidyr::pivot_longer(cols = !time, names_to = "compartment", values_to = "population") |>
-    dplyr::mutate(compartment = factor(compartment, levels=names(initialConditions)))
-  return(mod)
+    pivot_longer(cols = !time, names_to = "compartment", values_to = "population") |>
+    # Split out compartment into compartment and age
+    separate_wider_regex(compartment, c(compartment="[a-zA-Z]+", AgeGroup="\\d+")) |>
+    # Include Year and improve format of AgeGroup and compartment columns
+    mutate(Year=floor(time),
+           AgeGroup = as_factor(ageGroupNames()[as.numeric(AgeGroup)]),
+           compartment = as_factor(compartment)) %>%
+    bind_rows(., # Include rows for "Pop" variable containing total alive population per age group
+              . |> summarise(compartment="Pop", population=sum(population[!str_starts(compartment,"C")]), .by=c(time, AgeGroup, Year)))
+    # Include totpop column with annual age-specific population
+    # reframe(time=time,
+    #         compartment=compartment,
+    #         population=population,
+    #         totpop=sum(population[compartment |> str_starts("C", negate = T)])/365,
+    #         .by=c(Year,AgeGroup))
+
+  # Calculate annual values: incidence, treatment, vaccination
+  moAnnual <- moDaily |>
+    filter(str_starts(compartment, "C")|compartment=="Pop") |>
+    reframe(population = if_else(compartment=="Pop",
+                                   mean(population),
+                                   diff(range(population))),
+              .by = c(Year, compartment, AgeGroup)) |>
+    distinct() |>
+    mutate(compartment = str_remove(compartment, "^C")) |>
+    pivot_wider(names_from = compartment, values_from = population)
+
+  return(list(
+    moDaily = moDaily,
+    moAnnual = moAnnual
+  ))
 }
 
-
-
-plotModel <- function(mod) {
-  #' Plot the compartments of the model
+plotModel <- function(mod,
+                      Variables=NULL,
+                      Compartments=NULL,
+                      Ages=1:4,
+                      TimeRange=c(2000,2050),
+                      Per1KPop=F,
+                      UsePlotly=F) {
+  #' Plot model outputs
   #'
-  #' This function plots the compartments of the model
+  #' This function plots the compartments of the model generically.
+  #' Exactly one of `Variables` or `Compartments` must be given.
   #'
-  #' @param mod The model to plot
-  #' @return A ggplot plot
-  plt <- ggplot2::ggplot(mod) +
-    ggplot2::aes(x = time, y = population, color = compartment) +
-    ggplot2::geom_line() +
-    labs(title = "Compartmental Model",
-         color = "Compartment",
-         x = "Time",
-         y = "Population")
-  plt
-}
+  #' @param mod The model to plot (list with daily and annual tibbles)
+  #' @param Variables The variables to plot. One of `c("Inc", "Tr", "Vax", "Pop")`
+  #' @param Compartments The compartments to plot. One of `"S", "It", ..., "Pop"`.
+  #' @param Ages The ages to show in the plot. Must be a subset of 1:4 of length>=1.
+  #' @param TimeRange The years to plot between
+  #' @param Per1KPop Whether to plot per 1000 population (if `Variables` is given)
+  #' @param UsePlotly Whether to use plotly for the plot
+  #' @return A plotly object
 
-plotPop <- function(mod) {
-  plt <- mod |>
-    filter(compartment |> str_starts("C", negate = T)) |>
-    mutate(age = str_extract(compartment, pattern = "\\d+$") |> as.numeric()) |>
-    summarise(pop = sum(population), .by = c(time, age)) |>
-    ggplot(aes(x = time, y = pop, color = factor(age))) +
-    geom_line() +
-    labs(
-      title = "Population by age group",
-      x = "Time",
-      y = "Population",
-      color = "Age group"
-    )
-  plt
-}
+  # Validate inputs
+  if (missing(Variables) & missing(Compartments)) {
+    stop("One of Variables or Compartments must be given")
+  }
+  if (!missing(Variables) & !missing(Compartments)) {
+    stop("Only one of Variables or Compartments can be given")
+  }
+  if ("Pop" %in% Variables & length(Variables) > 1) {
+    stop("Pop cannot be plotted with other variables. Plot it alone or only use other variables")
+  }
+  if ("Pop" %in% Compartments & length(Compartments) > 1) {
+    stop("Pop cannot be plotted with other compartments. Plot it alone or only use other compartments")
+  }
+  if (!all(Ages %in% 1:4)) {
+    stop("Ages must be a subset of 1:4")
+  }
+  if (!missing(Variables)) {
+    if (!all(Variables %in% c("Inc", "Tr", "Vax", "Pop"))) {
+      stop("Variables must be a subset of c('Inc', 'Tr', 'Vax', 'Pop')")
+    }
+  } else {
+    if (!all(Compartments %in% c("S", "E", "In", "It", "Tr", "VA", "VB", "R", "CInc", "CTr", "CVax"))) {
+      stop("Compartments must be a subset of c('S', 'E', 'In', 'It', 'Tr', 'VA', 'VB', 'R', 'CInc', 'CTr', 'CVax')")
+    }
+  }
 
-plotInc <- function(mod, byAge = TRUE) {
-  tbIncAges <- mod |>
-    mutate(
-      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
-      Year = year(date_decimal(time)),
-      Month = month(date_decimal(time))
-    ) |>
-    filter(compartment |> str_starts("CInc")) |>
-    summarise(
-      Incidence = (last(population) - first(population)),
-      .by = c(Year, age)
-    ) |>
-    left_join(popage, by = c("Year", "age"))
-
-  plt_data <- tbIncAges |>
-    mutate(
-      age = factor(age),
-      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    )
-
-    plt <-  ggplot(data = plt_data, aes(x = Year, y = Incidence / popyr * 1000, fill = age)) +
-      geom_col(position = "dodge") +
+  shouldMakeAnnualPlot <- !missing(Variables)
+  # Make the plots as required
+  if (shouldMakeAnnualPlot) {
+    if ("Pop" %in% Variables) {
+      # User is asking to plot population only
+      plt <- mod$moAnnual |>
+        filter(as.integer(AgeGroup) %in% Ages,
+               Year >= first(TimeRange) & Year <= last(TimeRange)) |>
+        ggplot(aes(x = Year, y = Pop, color = factor(AgeGroup))) +
+        geom_line() +
+        labs(
+          title = paste0(popTxt, " by age group"),
+          x = "Year",
+          y = popTxt,
+          color = "Age group")
+    } else {
+      # User is asking to plot non-population variables (Inc, Tr, Vax)
+      popTxt <- if(Per1KPop) {"Rate per 1000 population"}else{"Population"}
+      plt <- mod$moAnnual |>
+        filter(as.integer(AgeGroup) %in% Ages,
+               Year >= first(TimeRange) & Year <= last(TimeRange)) |>
+        mutate(popScale = ifelse(Per1KPop,1000/Pop,1)) |>
+        pivot_longer(cols = all_of(Variables), names_to = "variable", values_to = "pop") |>
+        mutate(
+          variableName = case_when(
+            variable == "Inc" ~ "Incidence",
+            variable == "Tr" ~ "Treated",
+            variable == "Vax" ~ "Vaccinated"
+          )
+        ) |>
+        select(Year, AgeGroup, variableName, pop) |>
+        ggplot(aes(x = Year,
+                   y = pop,
+                   group = AgeGroup,
+                   fill = AgeGroup)) +
+        geom_col(position = "dodge") +
+        facet_wrap(~variableName, scales = "free_y") +
+        scale_y_continuous(labels = scales::comma) +
+        labs(
+          title = paste0(popTxt, " by age group"),
+          x = "Year",
+          y = popTxt,
+          color = "Age group")
+    }
+  } else {
+    # Make the daily plot
+    plt <- mod$moDaily |>
+      filter(as.integer(AgeGroup) %in% Ages,
+             compartment %in% Compartments,
+             Year >= first(TimeRange) & Year <= last(TimeRange)) |>
+      mutate(compartment=as_factor(compartment)) |>
+      ggplot(aes(x = time,
+                 y = population,
+                 group = AgeGroup,
+                 color = AgeGroup)) +
+      geom_line() +
+      facet_wrap(~compartment, scales = "free_y") +
+      scale_y_continuous(labels = scales::comma) +
       labs(
-        title = "Incidence by age group",
-        x = "Year",
-        y = "Incidence per 1000 population",
-        fill = "Age group"
-      ) +
-      theme(text = element_text(size = 12))
-
+        title = "Population by age group",
+        x = "Time",
+        y = "Population",
+        color = "Age group"
+      )
+  }
+  if (UsePlotly) {
     plotly::ggplotly(plt)
+  } else {
+    plt
+  }
 }
 
+# plotModel(mod, Variables = c("Inc","Tr","Vax"))
+# plotModel(mod, Variables = c("Inc"), Ages = 2:4)
+# plotModel(mod, Variables = c("Pop"))
+# plotModel(mod, Compartments = c("S","E","In","It","Tr","VA","VB","R","CInc","CTr","CVax"))
+# plotModel(mod, Compartments = c("VA", "VB"), Ages = 2:4)
 
-plotProt <- function(mod, byAge = TRUE) {
-  tbIncAges <- mod |>
+getCosts <- function(mod, cintro, cvacc, cdel, ctrt) {
+  #' Get the costs of the model
+  #' @param mod The model to get costs from
+  #' @return A tibble with the costs
+
+  ageGroupsVaccinated <- mod$moAnnual |>
+    filter(Vax>0) |>
+    pull(AgeGroup) |>
+    unique() |>
+    as.integer()
+
+  mod$moAnnual |>
     mutate(
-      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
-      Year = year(date_decimal(time)),
-      Month = month(date_decimal(time))
+      Doses = if_else(is.na(Vax), 0, Vax),
+      CostIntro = if_else(as.integer(AgeGroup) %in% ageGroupsVaccinated, cintro, 0),
+      CostVax = cvacc * Doses,
+      CostDel = cdel * Doses,
+      CostTr = ctrt * Tr,
+      CostTot = Doses + CostDel + CostTr
     ) |>
-    filter(
-      compartment %in% c("R1", "R2", "R3", "R4", "VA2", "VA3", "VB3", "VA4", "VB4"),
-      Year == (time)
-    ) |>
-    summarise(
-      Protected = sum(population),
-      .by = c(Year, age)
-    ) |>
-    left_join(popage, by = c("Year", "age"))
-
-  plt_data <- tbIncAges |>
-    mutate(
-      age = factor(age),
-      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    )
-
-  plt <- ggplot(data = plt_data, aes(x = Year, y = Protected / popyr, fill = age)) +
-    geom_col(position = "dodge") +
-    scale_y_continuous(labels = scales::percent_format()) +
-    labs(
-      title = "Population protected by age group (%)",
-      x = "Year",
-      y = "Proportion of  population",
-      fill = "Age group"
-    ) +
-    theme(text = element_text(size = 12))
-
-  plotly::ggplotly(plt)
+    select(Year, AgeGroup, Doses:CostTot) |>
+    pivot_longer(cols=!c(Year,AgeGroup), names_to="variable", values_to="Value")
 }
 
-
-plotTr <- function(mod, byAge = TRUE) {
-  tbIncAges <- mod |>
-    mutate(
-      age = str_extract(compartment, pattern = "\\d+$") |> as.numeric(),
-      Year = year(date_decimal(time)),
-      Month = month(date_decimal(time))
-    ) |>
-    filter(compartment |> str_starts("CTr")) |>
-    summarise(
-      Incidence = last(population) - first(population),
-      .by = c(Year, age)
-    )
-  plt_data <- tbIncAges |>
-    mutate(
-      age = factor(age),
-      age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4")
-    )
-
-  plt <- ggplot(data = plt_data, aes(x = Year, y = Incidence, fill = age)) +
-    geom_col(position = "dodge") +
-    labs(
-      title = "Treatment by age group",
-      x = "Year",
-      y = "Treatment",
-      fill = "Age group"
-    ) +
-    theme(text = element_text(size = 12))
-
-  plotly::ggplotly(plt)
+getCostsEpi <- function(mod, cintro, cvacc, cdel, ctrt, discountRate=0.03, discountYear=2025) {
+  getCosts(mod, cintro, cvacc, cdel, ctrt) |>
+    left_join(mod$moAnnual, by = join_by(Year, AgeGroup)) |>
+    pivot_wider(names_from = "variable", values_from = "Value") |>
+    mutate(discounting_factor = (1 + discountRate) ^ (discountYear - Year),
+           TotalCostsDiscounted = CostTot * discounting_factor) |>
+    summarise(TotalCosts = sum(TotalCostsDiscounted),
+              TotalIncidence = sum(Inc),
+              CostPerCase = TotalCosts / TotalIncidence,
+              .by = AgeGroup)
 }
+
+tableCosts <- function(mod, cintro, cvacc, cdel, ctrt, discountRate=0.03, discountYear=2025) {
+  getCostsEpi(mod, cintro, cvacc, cdel, ctrt, discountRate, discountYear) |>
+    reactable(defaultColDef = colDef(
+                format = colFormat(digits = 0, separators = TRUE),
+                footerStyle = list(fontWeight = "bold")
+              ),
+              columns = list(
+                AgeGroup = colDef(
+                  minWidth = 200,
+                  name = "Age Group",
+                  footer = "Total (costs include Introduction cost)"
+                ),
+                CostPerCase = colDef(
+                  name = "Cost per Incidence",
+                  format = colFormat(digits = 2),
+                  footer = function(values) {
+                    result <- round(sum(values, na.rm = TRUE), digits = 2)
+                    sprintf("$%s", format(result, big.mark = ","))
+                  }
+                ),
+                TotalIncidence = colDef(
+                  name = "Total Incidence",
+                  footer = function(values) {
+                    result <- round(sum(values, na.rm = TRUE), digits = 0)
+                    sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
+                  }
+                ),
+                TotalCosts = colDef(
+                  name = "Total Costs",
+                  footer = function(values) {
+                    result <- round(sum(values, na.rm = TRUE) + cintro, digits = 0)
+                    sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
+                  }
+                )
+              )
+    )
+
+}
+
+# tableCosts(mod = mod, cintro = 500000, cvacc = 2, cdel = 3, ctrt = 1, discountRate = 0.03, discountYear = 2025)
+
+# getCosts(mod, cintro=500000, cvacc=2, cdel=3, ctrt=1)
 
 costing <- function(mod, byAge=TRUE) {
   tbOutAges <- mod |>
@@ -295,32 +412,10 @@ getPopVec <- function(x) {
     sum(x[comp4]))
 }
 
-# survey_zim <- socialmixr::get_survey("https://doi.org/10.5281/zenodo.3886638")
-# cm <- socialmixr::contact_matrix(survey_zim, countries="Zimbabwe",
-#                                  age.limits = c(0,1,2),
-#                                  sample.participants = T,
-#                                  symmetric = T,
-#                                  return.demography = T)
-#
-# Mp=matrix(0,nrow=3,ncol=3)
-# for (i in 1:3) {
-#   for (j in 1:3) {
-#     Ni <- cm$demography$population[i]
-#     Nj <- cm$demography$population[j]
-#     Npi <- pop[i]
-#     Npj <- pop[j]
-#     Np <- sum(pop)
-#     Mij <- cm$matrix[i,j]
-#     sigmaDenom <- sum(pop*cm$matrix[i,]) # TODO: Fix this denom from Arregui M3
-#     Mp[i,j] <- Mij * (Npj/Nj) * Np/sigmaDenom
-#   }
-# }
-# cm
-
 makeContactMatrix <- function(initialConditions) {
   #' Roughly put in an estimate of contacts per day
   #' Keep in mind the size of the age groups
-  #' In our model: 0-1, 1-2, 2-5, 6+
+  #' In our model: 0-1, 1-2, 2-5, 5+
   #' @param initialConditions The initial conditions of the model
   #' @return A contact matrix which preserves reciprocity
   pops <- purrr::map_dbl(1:4, ~sum(as.numeric(initialConditions[stringr::str_detect(names(initialConditions), as.character(.x))])))

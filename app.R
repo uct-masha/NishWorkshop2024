@@ -61,14 +61,15 @@ ui <- page_navbar(
             tags$p("This application has been developed to exemplify how mathematical modelling can be used to provide scientific evidence to support decisions on vaccine introduction. In this application, a transmission model of a disease X has been developed for a population where the disease is currently transmitting.
             Disease X has been circulating in the population for many years. It has the following properties:"),
             tags$ul(
-            tags$li("Having the disease confers life-long immunity (similar to measles)"),
-            tags$li("In the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
-            tags$li("A new vaccine has been developed that is available globally."),
-            tags$li("This vaccine can be delivered in 1 or 2 dose format, where the first dose has protection efficacy of 85% and having both doses confers full (100%) protection."),
-            tags$li("The recommended schedule from the Global Health Authority is that the two doses are delivered at 1 year and 2 years of age respectively."),
-            tags$li("The planned introduction of the vaccine is 2025."),
-            tags$li("The vaccine is not yet included in the national immunisation schedule.")
-                     ),
+              tags$li("Having the disease confers life-long immunity (similar to measles)"),
+              tags$li("In the absence of vaccination, there are high levels of immunity in the older populations, but the very young are left without protection."),
+              tags$li("A new vaccine has been developed that is available globally."),
+              tags$li("This vaccine can be delivered in 1 or 2 dose format, where the first dose has protection efficacy of 85% and having both doses confers full (100%) protection."),
+              tags$li("The recommended schedule from the Global Health Authority is that the two doses are delivered at 1 year and 2 years of age respectively."),
+              tags$li("The planned introduction of the vaccine is 2025."),
+              tags$li("The vaccine is not yet included in the national immunisation schedule."),
+              tags$li("Symptomatic all")
+            ),
             tags$p("How to use the App"),
             tags$p("Use the sliders and input boxes on the left panel to select intended operational coverage of 1 or both doses of vaccine, and the costs of introducing the vaccine. Once you have made your selection, click the run button to run the transmission model to see the impact of vaccination on disease incidence, cases treated and the protection levels in the population. Use the summary table provided to assess the total cases and costs of vaccination for every scenario you create. You can use this output to generate the cases averted by vaccination and make a ratio of cost per case averted.")
           )
@@ -210,42 +211,30 @@ server <- function(input, output, session) {
     shinyjs::enable("runModel")
   })
 
+  modCostsEpi <- reactive({
+    getCostsEpi(modelOutput(),
+                cvacc = input$cvacc,
+                cdel = input$cdel,
+                ctrt = input$ctrt,
+                cintro = input$cintro,
+                discountRate = 0.03,
+                discountYear = input$timevax)
+  })
+
   # cost table
   output$model_table <- renderReactable({
-
-    cost_tbl <- costmod %>%
-      pivot_wider(
-        names_from = "variable",
-        values_from = "Value"
-      ) %>%
-      mutate(
-        discounting_factor = (1 + 0.03) ^ (2025 - Year),
-        total_costs_discounted = CostTot * discounting_factor
-      ) %>%
-      select(!discounting_factor) %>%
-      summarise(
-        total_incidence = sum(Inc),
-        total_costs = sum(total_costs_discounted),
-        .by = age
-      )
-
-    reactable(
-      cost_tbl %>% mutate(
-        age = factor(age),
-        age = fct_recode(age, "0-1yr" = "1", "1-2yrs" = "2", "2-5yrs" = "3", ">5yrs" = "4"),
-        cost_per_case = total_costs / total_incidence
-      ),
+    reactable(data = modCostsEpi(),
       defaultColDef = colDef(
         format = colFormat(digits = 0, separators = TRUE),
         footerStyle = list(fontWeight = "bold")
       ),
       columns = list(
-        age = colDef(
+        AgeGroup = colDef(
           minWidth = 200,
           name = "Age Group",
           footer = "Total (costs include Introduction cost)"
         ),
-        cost_per_case = colDef(
+        CostPerCase = colDef(
           name = "Cost per Incidence",
           format = colFormat(digits = 2),
           footer = function(values) {
@@ -253,14 +242,14 @@ server <- function(input, output, session) {
             sprintf("$%s", format(result, big.mark = ","))
           }
         ),
-        total_incidence = colDef(
+        TotalIncidence = colDef(
           name = "Total Incidence",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE), digits = 0)
             sprintf("$%s", format(result, big.mark = ",", nsmall = 0))
           }
         ),
-        total_costs = colDef(
+        TotalCosts = colDef(
           name = "Total Costs",
           footer = function(values) {
             result <- round(sum(values, na.rm = TRUE) + input$cintro, digits = 0)
@@ -273,17 +262,17 @@ server <- function(input, output, session) {
 
   # plot the model output: Incidence
   output$model_plot_incidence <- renderPlotly({
-    plotInc(modelOutput() |> filter(time>=2022))
+    plotModel(modelOutput(), TimeRange = c(2022,Inf), Variables = c("Inc"))
   })
 
   # plot the model output: Protected
   output$model_plot_protected <- renderPlotly({
-    plotProt(modelOutput() |> filter(time>=2022))
+    plotModel(modelOutput(), TimeRange = c(2022,Inf), Variables = c("Vax"))
   })
 
   # plot the model output: Treatment
   output$model_plot_treated <- renderPlotly({
-    plotTr(modelOutput() |> filter(time>=2022))
+    plotModel(modelOutput(), TimeRange = c(2022,Inf), Variables = c("Tr"))
   })
 }
 
