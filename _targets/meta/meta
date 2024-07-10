@@ -1,0 +1,34 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+.Random.seed|object|cd5cd9e5bf699057|||||||||||||||
+ageGroupNames|function|ae4d4611cb5f9099|||||||||||||||
+contact|stem|9dddc2bb97116e9c|fd39080ed3854d99|542a855267c02db4|-57847263||t19913.6853492502s|e54aa0f2867752ec|193|rds|local|vector|||0.11||
+contacts|stem|9dddc2bb97116e9c|fd39080ed3854d99|542a855267c02db4|1129678332||t19913.8173540229s|e54aa0f2867752ec|193|rds|local|vector|||0.032||
+costing|function|481427de9cbe9007|||||||||||||||
+getCosts|function|21a9505c9888d1c6|||||||||||||||
+getCostsEpi|function|651052ae2e5c2af2|||||||||||||||
+getPopVec|function|79adbc9467a26dbd|||||||||||||||
+initialConditions|stem|dbbf7c38d90606fe|61cf227de354dabd|39661cb1aa5c5e64|-1165501916||t19913.6853476209s|e818f06db8013bcf|306|rds|local|vector|||0||
+makeContactMatrix|function|992cd6ded67b90e3|||||||||||||||
+makeInitialConditions|function|2ae9825a26e0856f|||||||||||||||
+makeParameters|function|1549f72d1c69e78f|||||||||||||||
+mod_0_0|stem|3f38e4434ca0e913|50e9900b83aaa937|95493c284eb3612f|-2145170202||t19914.2533028943s|1d8a356dabfa12d7|4050171|rds|local|vector|||6.86|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+mod_85_0|stem|52ece8f7ab9ace5c|13eec8c112946e96|95493c284eb3612f|560013476||t19914.2533266036s|0754ff193fdecd06|4261291|rds|local|vector|||8.328|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+mod_85_85|stem|9b0ab2ec35146d5b|56646e8493db394a|95493c284eb3612f|331737945||t19914.2533333642s|eeca01d50bf1e583|4374671|rds|local|vector|||8.36|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plotInc|function|368265d67ca98cc7|||||||||||||||
+plotModel|function|d8fcebf98ba76506|||||||||||||||
+plotPop|function|4e26a102f40a4979|||||||||||||||
+plotProt|function|95dc6e3b2ff5aa57|||||||||||||||
+plotTr|function|83e2e4b6d7a3b95f|||||||||||||||
+plt_inc_0_0|stem|e6bee60b41aaa8f5|90b1a71e91e6ef94|e4c58f5babae99dc|-2089153637||t19914.3007916555s|a0e9258c24438451|4288440|rds|local|vector|||1.375|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plt_inc_85_0|stem|3da73307468702c5|bfb62500a33417d9|923ecbc23496739a|1533319934||t19914.3007799984s|f50bdf28e65f08fb|4498715|rds|local|vector|||1.469|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plt_inc_85_85|stem|a45aaf8a870742c3|49e22eba15faf2eb|74d37718b57ccecd|1134028898||t19914.3008018763s|16d6b20bcd488ee5|4612967|rds|local|vector|||1.438|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plt_prot_0_0|stem|fd3a0bc65ca5c35e|8760ed6d91e7222f|e4c58f5babae99dc|-232699217||t19914.3007571984s|ba68a86432360cfc|4285330|rds|local|vector|||1.407|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plt_prot_85_0|stem|eccade6eacee6a72|774008f5637cf7a9|923ecbc23496739a|-833624625||t19914.3007443745s|09062acf5ae1d46e|4496582|rds|local|vector|||1.422|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+plt_prot_85_85|stem|408d85df2507a0c4|fc4ddbb28b2751a5|74d37718b57ccecd|-1587897767||t19914.3007690714s|3197511b8614ff63|4610603|rds|local|vector|||1.484|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+pop_size|stem|06f5de41fa7880f3|703c743ef4fb11bc|2c530c1562a7fbd1|205587067||t19913.6853469193s|948ebae6388656f3|51|rds|local|vector|||0.843|package bslib was built under R version 4.4.1. package tibble was built under R version 4.4.1|
+popVal|function|0a1576bf2cd86376|||||||||||||||
+postProc|function|b11c1c16940399d0|||||||||||||||
+rates|function|01f61b76413a27eb|||||||||||||||
+rescalePop|function|c9b5270064588512|||||||||||||||
+runModel|function|91bca31259b917db|||||||||||||||
+tableCosts|function|73e887f286aab7e6|||||||||||||||
