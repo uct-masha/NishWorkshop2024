@@ -218,7 +218,7 @@ server <- function(input, output, session) {
                 ctrt = input$ctrt,
                 cintro = input$cintro,
                 discountRate = 0.03,
-                discountYear = input$timevax)
+                discountYear = input$yearStart)
   })
 
   # cost table
