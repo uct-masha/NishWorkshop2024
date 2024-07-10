@@ -174,6 +174,9 @@ mo_initial <- runModel(
 
 # define the server function ####
 server <- function(input, output, session) {
+
+  session$allowReconnect(TRUE)
+
   params <- reactive({
     makeParameters(
                    timevax = input$yearStart,
