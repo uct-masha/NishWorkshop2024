@@ -374,25 +374,3 @@ makeParameters <- function(mub= 1/45,
   )
 }
 
-initialConditions <- rescalePop(unlist(makeInitialConditions()), 50000000)
-contact <- makeContactMatrix(initialConditions = initialConditions)
-
-mod <- runModel(startyear=2000, endyear=2040,
-                initialConditions=initialConditions,
-                parameters=makeParameters(),
-                contact = contact)
-
-popage<-mod |> #create average population by age and year for denominator in plots
-  filter(compartment |> str_starts("C", negate = T)) |>
-  mutate(age=str_extract(compartment,pattern="\\d+$") |> as.numeric()) |>
-  summarise(pop=sum(population), .by=c(time,age)) |>
-  mutate(Year = floor(time)) |>
-  summarise(popyr=((last(pop) + first(pop))/2),
-            .by=c(Year, age))
-
-costmod <- costing(mod)
-
-# plotModel(mod)
-plotInc(mod |> filter(time>=2024))
-plotProt(mod |> filter(time>=2015))
-
