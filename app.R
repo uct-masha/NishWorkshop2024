@@ -26,6 +26,7 @@ library(docstring) # Lets you use ?func for functions in this file
 library(reactable)
 library(shinycssloaders)
 library(plotly)
+library(htmltools)
 
 # source the model in
 source("model.R")
