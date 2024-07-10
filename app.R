@@ -12,22 +12,7 @@
 ## need to add table to the model output
 ## need to engage with costing and question structure and create rubric.
 
-library(shiny)
-library(bslib)
-library(PBSddesolve)
-library(dplyr)
-library(forcats)
-library(tidyr)
-library(stringr)
-library(tibble)
-library(lubridate)
-library(ggplot2)
-library(docstring) # Lets you use ?func for functions in this file
-library(reactable)
-library(shinycssloaders)
-library(plotly)
-
-# source the model in
+source("packages.R")
 source("model.R")
 
 img_src <- as.character(paste0('data:image/png;base64,', readLines("logo_masha.txt")[[1]], collapse=""))
