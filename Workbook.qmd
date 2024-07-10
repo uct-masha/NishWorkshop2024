@@ -1,0 +1,81 @@
+---
+title: "Model Workbook"
+editor: visual
+---
+
+This workbook walks through 3 scenarios using the VaxSim model.
+
+```{r setup, include=FALSE, echo=FALSE}
+targets::tar_make()
+targets::tar_load_everything()
+source("packages.R")
+source("model.R")
+# Helper function for plots:
+plt_simple <- function(mod, v="Inc", subtitle="", ymax=NULL, sy=2022, ...) {
+  plt <- plotModel(mod, Variables = v, UsePlotly = F, TimeRange=c(sy, Inf), ...) + ggplot2::labs(subtitle=subtitle)
+  if (!is.null(ymax)) {
+    plt <- plt + ggplot2::coord_cartesian(ylim=c(0,ymax))
+  }
+  plt
+}
+```
+
+## Scenarios
+
+::: panel-tabset
+### Baseline: No vaccination
+
+Under this scenario we assume no vaccination. This serves as a baseline. Under both scenarios the intervention is immediately implemented.
+
+### Scenario 1: Single dose
+
+Under this scenario we assume a single dose of the vaccine is administered to 85% of the population. The vaccine is administered at 1 years old.
+
+### Scenario 2: Two doses
+
+Under this scenario we assume two doses of the vaccine are administered to 85% of the population. The vaccines are administered at ages 1 year and 2 years.
+:::
+
+## Incidence plots
+
+::: panel-tabset
+### Baseline
+
+```{r}
+plt_simple(mod_0_0, v="Inc", subtitle="No vaccination", Per1KPop=T)
+```
+
+### Single dose
+
+```{r}
+plt_simple(mod_85_0, v="Inc", subtitle="Single dose at 85%", Per1KPop=T)
+```
+
+### Two doses
+
+```{r}
+plt_simple(mod_85_85, v="Inc", subtitle="Two doses at 85%", Per1KPop=T)
+```
+:::
+
+## Population protected plots
+
+::: panel-tabset
+### Baseline
+
+```{r plotProp, warning=F}
+plt_simple(mod_0_0, v="Tr", subtitle="Baseline", Per1KPop=T)
+```
+
+### Single dose
+
+```{r}
+plt_simple(mod_85_0, v="Tr", subtitle="Single dose at 85%", Per1KPop=T)
+```
+
+### Two dose
+
+```{r}
+plt_simple(mod_85_85, v="Tr", subtitle="Two doses at 85%", Per1KPop=T)
+```
+:::

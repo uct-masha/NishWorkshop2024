@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "Workbook.html#scenarios",
+    "href": "Workbook.html#scenarios",
+    "title": "Model Workbook",
+    "section": "Scenarios",
+    "text": "Scenarios\n\nBaseline: No vaccinationScenario 1: Single doseScenario 2: Two doses\n\n\nUnder this scenario we assume no vaccination. This serves as a baseline. Under both scenarios the intervention is immediately implemented.\n\n\nUnder this scenario we assume a single dose of the vaccine is administered to 85% of the population. The vaccine is administered at 1 years old.\n\n\nUnder this scenario we assume two doses of the vaccine are administered to 85% of the population. The vaccines are administered at ages 1 year and 2 years."
+  },
+  {
+    "objectID": "Workbook.html#incidence-plots",
+    "href": "Workbook.html#incidence-plots",
+    "title": "Model Workbook",
+    "section": "Incidence plots",
+    "text": "Incidence plots\n\nBaselineSingle doseTwo doses\n\n\n\nplt_simple(mod_0_0, v=\"Inc\", subtitle=\"No vaccination\", Per1KPop=T)\n\n\n\n\n\n\n\n\n\n\n\nplt_simple(mod_85_0, v=\"Inc\", subtitle=\"Single dose at 85%\", Per1KPop=T)\n\n\n\n\n\n\n\n\n\n\n\nplt_simple(mod_85_85, v=\"Inc\", subtitle=\"Two doses at 85%\", Per1KPop=T)"
+  },
+  {
+    "objectID": "Workbook.html#population-protected-plots",
+    "href": "Workbook.html#population-protected-plots",
+    "title": "Model Workbook",
+    "section": "Population protected plots",
+    "text": "Population protected plots\n\nBaselineSingle doseTwo dose\n\n\n\nplt_simple(mod_0_0, v=\"Tr\", subtitle=\"Baseline\", Per1KPop=T)\n\n\n\n\n\n\n\n\n\n\n\nplt_simple(mod_85_0, v=\"Tr\", subtitle=\"Single dose at 85%\", Per1KPop=T)\n\n\n\n\n\n\n\n\n\n\n\nplt_simple(mod_85_85, v=\"Tr\", subtitle=\"Two doses at 85%\", Per1KPop=T)"
+  },
+  {
+    "objectID": "Workbook.html",
+    "href": "Workbook.html",
+    "title": "Model Workbook",
+    "section": "",
+    "text": "This workbook walks through 3 scenarios using the VaxSim model."
+  }
+]
