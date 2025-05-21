@@ -36,8 +36,10 @@ img_src <- as.character(paste0('data:image/png;base64,', readLines("logo_masha.t
 # define the ui ####
 ui <- page_navbar(
   title = "VaxSim",
-  bg = "#373A40",
-  inverse = TRUE,
+  navbar_options = navbar_options(
+    bg = "#373A40",
+    theme = "auto"
+  ),
   theme = bs_theme(
     version = 5,
     base_font = "Roboto",
